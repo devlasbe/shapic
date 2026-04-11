@@ -15,7 +15,8 @@ mac:
   target:
     - dmg
   category: public.app-category.graphics-design
-  artifactName: "${productName}-${version}-${arch}.${ext}"
+  artifactName: "${productName}-${arch}.${ext}"
 win:
   target:
     - nsis
+  artifactName: "${productName}-Setup.${ext}"
