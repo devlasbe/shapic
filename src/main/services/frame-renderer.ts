@@ -23,10 +23,15 @@ const buildInfoParts = (exif: ExifDataType) => {
   return { cameraInfo, lensInfo, settingsParts }
 }
 
+const calcFrameDimensions = (imageWidth: number): { frameHeight: number; fontSize: number } => {
+  const frameHeight = Math.max(32, Math.min(200, Math.round(imageWidth * 0.05)))
+  const fontSize = Math.max(8, Math.min(48, Math.round(frameHeight * 0.23)))
+  return { frameHeight, fontSize }
+}
+
 const generateMinimalWhiteSvg = (ctx: FrameContextType): { svg: string; frameHeight: number } => {
-  const frameHeight = 56
   const { imageWidth, exif } = ctx
-  const fontSize = Math.max(10, Math.min(13, imageWidth / 85))
+  const { frameHeight, fontSize } = calcFrameDimensions(imageWidth)
   const { cameraInfo, settingsParts } = buildInfoParts(exif)
 
   const centerText = [cameraInfo, settingsParts].filter(Boolean).join('    ')
@@ -39,9 +44,22 @@ const generateMinimalWhiteSvg = (ctx: FrameContextType): { svg: string; frameHei
   return { svg, frameHeight }
 }
 
+export const calcFrameLayout = (targetWidth: number, targetHeight: number) => {
+  const borderWidth = Math.max(8, Math.round(targetWidth * 0.015))
+  const innerWidth = targetWidth - 2 * borderWidth
+  const { frameHeight } = calcFrameDimensions(innerWidth)
+  return {
+    innerWidth,
+    innerHeight: targetHeight - 2 * borderWidth - frameHeight,
+    borderWidth,
+    frameHeight
+  }
+}
+
 export const applyFrame = async (
   resizedImageBuffer: Buffer,
-  exif: ExifDataType
+  exif: ExifDataType,
+  overrideBorderWidth?: number
 ): Promise<Buffer> => {
   const meta = await sharp(resizedImageBuffer).metadata()
   if (!meta.width || !meta.height) {
@@ -55,7 +73,7 @@ export const applyFrame = async (
   const framePng = await sharp(Buffer.from(svg)).resize(imageWidth, frameHeight).png().toBuffer()
 
   const bgColor = { r: 255, g: 255, b: 255, alpha: 1 }
-  const borderWidth = Math.max(8, Math.round(imageWidth * 0.015))
+  const borderWidth = overrideBorderWidth ?? Math.max(8, Math.round(imageWidth * 0.015))
 
   const extended = await sharp(resizedImageBuffer)
     .extend({
