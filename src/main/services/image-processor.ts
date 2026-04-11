@@ -14,6 +14,7 @@ type ProcessImageOptionsType = {
   resizeMode: ResizeModeType
   output: { format: OutputFormatType; quality: number }
   frameStyle: FrameStyleType
+  outputPath?: string
 }
 
 type BatchProcessOptionsType = {
@@ -126,6 +127,61 @@ const resolveResizeOptions = (
   }
 }
 
+const buildOutputPathMap = async (
+  images: { id: string; path: string; name: string }[],
+  outputDir: string,
+  outputFormat: OutputFormatType
+): Promise<Map<string, string>> => {
+  const outputExt = outputFormat === 'jpeg' ? '.jpg' : '.webp'
+
+  let existingFiles: Set<string>
+  try {
+    const entries = await fs.readdir(outputDir)
+    existingFiles = new Set(entries.map((e) => e.toLowerCase()))
+  } catch {
+    existingFiles = new Set()
+  }
+
+  const nameCounters = new Map<string, number>()
+  const pathMap = new Map<string, string>()
+
+  for (const image of images) {
+    const baseName = path.basename(image.path, path.extname(image.path))
+    const canonical = `${baseName}_shapic`
+    const canonicalLower = canonical.toLowerCase()
+    const extLower = outputExt.toLowerCase()
+
+    let counter = nameCounters.get(canonicalLower) ?? 0
+
+    let outputFileName: string
+    if (counter === 0) {
+      const candidate = `${canonical}${outputExt}`
+      if (!existingFiles.has(candidate.toLowerCase())) {
+        outputFileName = candidate
+        nameCounters.set(canonicalLower, 1)
+      } else {
+        let n = 1
+        while (existingFiles.has(`${canonicalLower} (${n})${extLower}`)) {
+          n++
+        }
+        outputFileName = `${canonical} (${n})${outputExt}`
+        nameCounters.set(canonicalLower, n + 1)
+      }
+    } else {
+      while (existingFiles.has(`${canonicalLower} (${counter})${extLower}`)) {
+        counter++
+      }
+      outputFileName = `${canonical} (${counter})${outputExt}`
+      nameCounters.set(canonicalLower, counter + 1)
+    }
+
+    existingFiles.add(outputFileName.toLowerCase())
+    pathMap.set(image.path, path.join(outputDir, outputFileName))
+  }
+
+  return pathMap
+}
+
 const processImage = async (options: ProcessImageOptionsType): Promise<ProcessedResultType> => {
   const { inputPath, outputDir, preset, resizeMode, output, frameStyle } = options
 
@@ -148,9 +204,12 @@ const processImage = async (options: ProcessImageOptionsType): Promise<Processed
   pipeline = pipeline.rotate()
   pipeline = pipeline.resize(width, height, resizeOpts)
 
-  const outputExt = output.format === 'jpeg' ? '.jpg' : '.webp'
-  const baseName = path.basename(inputPath, path.extname(inputPath))
-  const outputPath = path.join(outputDir, `${baseName}_shapic${outputExt}`)
+  const outputPath =
+    options.outputPath ??
+    path.join(
+      outputDir,
+      `${path.basename(inputPath, path.extname(inputPath))}_shapic${output.format === 'jpeg' ? '.jpg' : '.webp'}`
+    )
 
   const needsFrame = frameStyle !== 'none'
   let exifData = null
@@ -210,6 +269,12 @@ export const processBatch = async (
   const errors: { inputPath: string; error: string }[] = []
   let completedCount = 0
 
+  const outputPathMap = await buildOutputPathMap(
+    options.images,
+    options.outputDir,
+    options.output.format
+  )
+
   const semaphore = new Array(concurrency).fill(Promise.resolve())
   let semaphoreIndex = 0
 
@@ -230,7 +295,8 @@ export const processBatch = async (
           preset: options.preset,
           resizeMode: options.resizeMode,
           output: options.output,
-          frameStyle: options.frameStyle
+          frameStyle: options.frameStyle,
+          outputPath: outputPathMap.get(image.path)
         })
 
         results.push(result)
