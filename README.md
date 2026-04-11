@@ -5,7 +5,11 @@
 
 SNS 플랫폼에 최적화된 이미지 리사이즈 & 최적화 데스크톱 앱
 
-![Shapic 스크린샷](./resources/screenshot.png)
+## 왜 만들었나
+
+고화소 사진을 Instagram 등 SNS에 그대로 올리면 플랫폼의 자동 압축과 리사이즈로 화질이 뭉개집니다. 업로드 전에 플랫폼 규격에 맞게 직접 리사이즈하면 화질 저하를 최소화할 수 있지만, 이를 위해 매번 Photoshop 같은 무거운 도구를 실행하는 건 비효율적입니다. Shapic은 드래그 앤 드롭만으로 SNS 최적화 리사이즈를 완료할 수 있도록 설계된 경량 데스크톱 앱입니다.
+
+![Shapic 스크린샷](https://github.com/user-attachments/assets/d5e47772-d508-4124-a7f9-35af62e4e046)
 
 ## 주요 기능
 
@@ -20,13 +24,11 @@ SNS 플랫폼에 최적화된 이미지 리사이즈 & 최적화 데스크톱 �
 
 ## 다운로드
 
-> 첫 릴리즈 준비 중입니다.
-
-| 플랫폼 | 다운로드 |
-|--------|---------|
-| macOS (Apple Silicon) | [Shapic-x.x.x-arm64.dmg](https://github.com/devlasbe/shapic/releases/latest) |
-| macOS (Intel) | [Shapic-x.x.x-x64.dmg](https://github.com/devlasbe/shapic/releases/latest) |
-| Windows | [Shapic-x.x.x-setup.exe](https://github.com/devlasbe/shapic/releases/latest) |
+| 플랫폼                | 다운로드                                                       |
+| --------------------- | -------------------------------------------------------------- |
+| macOS (Apple Silicon) | [다운로드](https://github.com/devlasbe/shapic/releases/latest) |
+| macOS (Intel)         | [다운로드](https://github.com/devlasbe/shapic/releases/latest) |
+| Windows               | [다운로드](https://github.com/devlasbe/shapic/releases/latest) |
 
 ## macOS 설치 안내
 
@@ -61,16 +63,16 @@ SNS 플랫폼에 최적화된 이미지 리사이즈 & 최적화 데스크톱 �
 
 ## 기술 스택
 
-| 분류 | 기술 |
-|------|------|
-| 프레임워크 | Electron 41 |
-| 프론트엔드 | React 19, TypeScript |
-| 스타일링 | Tailwind CSS 4 |
-| 상태 관리 | Zustand |
-| 이미지 처리 | Sharp |
-| EXIF 파싱 | exif-reader |
-| 빌드 | Electron Vite, Electron Builder |
-| 패키지 매니저 | pnpm |
+| 분류          | 기술                            |
+| ------------- | ------------------------------- |
+| 프레임워크    | Electron 41                     |
+| 프론트엔드    | React 19, TypeScript            |
+| 스타일링      | Tailwind CSS 4                  |
+| 상태 관리     | Zustand                         |
+| 이미지 처리   | Sharp                           |
+| EXIF 파싱     | exif-reader                     |
+| 빌드          | Electron Vite, Electron Builder |
+| 패키지 매니저 | pnpm                            |
 
 ## 로컬 실행
 
