@@ -16,7 +16,7 @@ const PresetModal = ({ onClose }: PresetModalPropsType) => {
   const [width, setWidth] = useState(1080)
   const [height, setHeight] = useState(1080)
   const [format, setFormat] = useState<OutputFormatType>('jpeg')
-  const [quality, setQuality] = useState(85)
+  const [quality, setQuality] = useState(100)
 
   const handleSave = async () => {
     if (!name.trim()) return

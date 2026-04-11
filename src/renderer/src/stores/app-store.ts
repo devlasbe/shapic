@@ -40,7 +40,7 @@ const initialOptions: ProcessingOptionsType = {
   presetId: null,
   resizeMode: { kind: 'preset-fit', fit: 'cover' },
   outputFormat: 'jpeg',
-  quality: 85,
+  quality: 100,
   frameStyle: 'none',
   outputFolder: ''
 }
