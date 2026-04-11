@@ -28,6 +28,16 @@ SNS 플랫폼에 최적화된 이미지 리사이즈 & 최적화 데스크톱 �
 | macOS (Intel) | [Shapic-x.x.x-x64.dmg](https://github.com/devlasbe/shapic/releases/latest) |
 | Windows | [Shapic-x.x.x-setup.exe](https://github.com/devlasbe/shapic/releases/latest) |
 
+## macOS 설치 안내
+
+현재 Shapic은 Apple 공증을 받지 않은 상태이므로, 처음 실행 시 보안 경고가 표시됩니다.
+
+1. 다운로드한 `.dmg` 파일을 열고 Shapic을 Applications 폴더로 드래그
+2. Shapic을 실행하면 **"확인할 수 없는 개발자"** 경고가 표시됨
+3. **시스템 설정 → 개인정보 보호 및 보안** 으로 이동
+4. 하단의 **"그래도 열기"** 버튼 클릭
+5. 이후부터는 정상적으로 실행됩니다
+
 ## 사용법
 
 ### 1. 이미지 불러오기
