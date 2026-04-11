@@ -7,8 +7,7 @@ export const PRESET_CATEGORIES: Record<PresetCategoryType, string> = {
   youtube: 'YouTube',
   tiktok: 'TikTok',
   linkedin: 'LinkedIn',
-  web: 'Web',
-  print: 'Print'
+  general: '일반'
 }
 
 export const BUILT_IN_PRESETS: PresetType[] = [
@@ -55,17 +54,6 @@ export const BUILT_IN_PRESETS: PresetType[] = [
     format: 'jpeg',
     quality: 85,
     description: '1080x1920 · 9:16',
-    isCustom: false
-  },
-  {
-    id: 'ig-profile',
-    name: 'Profile',
-    category: 'instagram',
-    width: 320,
-    height: 320,
-    format: 'jpeg',
-    quality: 90,
-    description: '320x320 · 1:1',
     isCustom: false
   },
   {
@@ -332,51 +320,16 @@ export const BUILT_IN_PRESETS: PresetType[] = [
     isCustom: false
   },
 
-  // --- Web (2) ---
+  // --- 일반 (1) ---
   {
-    id: 'web-standard',
-    name: 'Web Standard',
-    category: 'web',
-    width: 1920,
+    id: 'general-original',
+    name: '원본 비율',
+    category: 'general',
+    width: null,
     height: null,
-    format: 'webp',
-    quality: 80,
-    description: 'max 1920px · 원본 비율',
-    isCustom: false
-  },
-  {
-    id: 'web-retina',
-    name: 'Web Retina 2x',
-    category: 'web',
-    width: 3840,
-    height: null,
-    format: 'webp',
-    quality: 75,
-    description: 'max 3840px · 원본 비율',
-    isCustom: false
-  },
-
-  // --- Print (2) ---
-  {
-    id: 'print-a4',
-    name: 'A4 (300dpi)',
-    category: 'print',
-    width: 3508,
-    height: 2480,
     format: 'jpeg',
-    quality: 95,
-    description: '3508x2480 · 210x297mm',
-    isCustom: false
-  },
-  {
-    id: 'print-card',
-    name: '명함 (300dpi)',
-    category: 'print',
-    width: 1050,
-    height: 600,
-    format: 'jpeg',
-    quality: 95,
-    description: '1050x600 · 90x50mm',
+    quality: 90,
+    description: '원본 크기 · 비율 유지',
     isCustom: false
   }
 ]

@@ -77,6 +77,13 @@ const resolveResizeOptions = (
   switch (mode.kind) {
     case 'preset-fit': {
       if (!preset) throw new Error('Preset is required for preset-fit mode')
+      if (preset.width === null && preset.height === null) {
+        return {
+          width: null,
+          height: null,
+          options: {}
+        }
+      }
       return {
         width: preset.width,
         height: preset.height,

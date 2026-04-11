@@ -64,8 +64,7 @@ const PresetModal = ({ onClose }: PresetModalPropsType) => {
             <option value="youtube">YouTube</option>
             <option value="tiktok">TikTok</option>
             <option value="linkedin">LinkedIn</option>
-            <option value="web">Web</option>
-            <option value="print">Print</option>
+            <option value="general">일반</option>
           </select>
         </div>
 

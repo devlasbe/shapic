@@ -13,8 +13,7 @@ export type PresetCategoryType =
   | 'youtube'
   | 'tiktok'
   | 'linkedin'
-  | 'web'
-  | 'print'
+  | 'general'
 
 export type ResizeFitType = 'cover' | 'contain' | 'fill' | 'inside' | 'outside'
 
@@ -73,7 +72,7 @@ export type PresetType = {
   id: string
   name: string
   category: PresetCategoryType
-  width: number
+  width: number | null
   height: number | null
   format: OutputFormatType
   quality: number
