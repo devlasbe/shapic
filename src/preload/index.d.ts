@@ -9,7 +9,7 @@ import type {
   PreviewResultType
 } from '../renderer/src/types/index.js'
 
-export type ImageForgeApiType = {
+export type PhotoLayerApiType = {
   image: {
     load: (filePaths: string[]) => Promise<LoadedImageType[]>
     process: (options: BatchProcessOptionsType) => Promise<void>
@@ -30,6 +30,6 @@ export type ImageForgeApiType = {
 
 declare global {
   interface Window {
-    api: ImageForgeApiType
+    api: PhotoLayerApiType
   }
 }

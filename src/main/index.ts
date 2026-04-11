@@ -10,7 +10,7 @@ const createWindow = () => {
     height: 800,
     minWidth: 900,
     minHeight: 600,
-    title: 'ImageForge',
+    title: 'PhotoLayer',
     titleBarStyle: 'hiddenInset',
     trafficLightPosition: { x: 12, y: 14 },
     webPreferences: {

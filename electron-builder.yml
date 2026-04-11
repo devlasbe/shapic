@@ -1,5 +1,5 @@
-appId: com.imageforge.app
-productName: ImageForge
+appId: com.photo-layer.app
+productName: PhotoLayer
 directories:
   buildResources: resources
   output: dist

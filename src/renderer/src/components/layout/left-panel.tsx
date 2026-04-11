@@ -13,7 +13,7 @@ const LeftPanel = () => {
               <rect x="6.5" y="6.5" width="4" height="4" rx="1" fill="white" opacity="0.3" />
             </svg>
           </div>
-          <span className="text-xs font-semibold text-text-primary tracking-tight">ImageForge</span>
+          <span className="text-xs font-semibold text-text-primary tracking-tight">PhotoLayer</span>
         </div>
       </div>
       <ImageList />

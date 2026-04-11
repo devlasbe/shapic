@@ -11,7 +11,7 @@ import type {
   PreviewResultType
 } from './types'
 
-type ImageForgeApiType = {
+type PhotoLayerApiType = {
   image: {
     load: (filePaths: string[]) => Promise<LoadedImageType[]>
     process: (options: BatchProcessOptionsType) => Promise<void>
@@ -32,6 +32,6 @@ type ImageForgeApiType = {
 
 declare global {
   interface Window {
-    api: ImageForgeApiType
+    api: PhotoLayerApiType
   }
 }
