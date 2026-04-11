@@ -17,9 +17,11 @@ jobs:
           - os: macos-14
             platform: mac
             arch: arm64
+            arch_name: apple_silicon
           - os: macos-15
             platform: mac
             arch: x64
+            arch_name: intel
           - os: windows-latest
             platform: win
             arch: x64
@@ -67,10 +69,17 @@ jobs:
           --${{ matrix.arch }}
           --publish never
 
+      - name: Rename artifact (macOS)
+        if: matrix.platform == 'mac'
+        run: |
+          for f in dist/*.dmg; do
+            mv "$f" "${f//${{ matrix.arch }}/${{ matrix.arch_name }}}"
+          done
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: release-${{ matrix.platform }}-${{ matrix.arch }}
+          name: release-${{ matrix.platform }}-${{ matrix.arch_name || matrix.arch }}
           path: |
             dist/*.dmg
             dist/*.exe
