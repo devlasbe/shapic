@@ -24,9 +24,9 @@ SNS 플랫폼에 최적화된 이미지 리사이즈 & 최적화 데스크톱 �
 
 | 플랫폼 | 다운로드 |
 |--------|---------|
-| macOS (Apple Silicon) | [Shapic-x.x.x-arm64.dmg](https://github.com/lasbe/shapic/releases/latest) |
-| macOS (Intel) | [Shapic-x.x.x-x64.dmg](https://github.com/lasbe/shapic/releases/latest) |
-| Windows | [Shapic-x.x.x-setup.exe](https://github.com/lasbe/shapic/releases/latest) |
+| macOS (Apple Silicon) | [Shapic-x.x.x-arm64.dmg](https://github.com/devlasbe/shapic/releases/latest) |
+| macOS (Intel) | [Shapic-x.x.x-x64.dmg](https://github.com/devlasbe/shapic/releases/latest) |
+| Windows | [Shapic-x.x.x-setup.exe](https://github.com/devlasbe/shapic/releases/latest) |
 
 ## 사용법
 
@@ -73,7 +73,7 @@ SNS 플랫폼에 최적화된 이미지 리사이즈 & 최적화 데스크톱 �
 
 ```bash
 # 저장소 클론
-git clone https://github.com/lasbe/shapic.git
+git clone https://github.com/devlasbe/shapic.git
 cd shapic
 
 # 의존성 설치
