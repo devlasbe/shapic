@@ -73,7 +73,10 @@ const resolveResizeOptions = (
         options: {
           fit: mode.fit,
           position: 'centre',
-          withoutEnlargement: false
+          withoutEnlargement: false,
+          ...(mode.fit === 'contain' && {
+            background: { r: 255, g: 255, b: 255, alpha: 1 }
+          })
         }
       }
     }
