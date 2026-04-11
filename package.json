@@ -22,7 +22,7 @@
     "email": "devlasbe@gmail.com",
     "url": "https://lasbe.kr"
   },
-  "license": "MIT",
+  "license": "GPL-3.0",
   "dependencies": {
     "clsx": "^2.1.1",
     "electron-store": "^11.0.2",
