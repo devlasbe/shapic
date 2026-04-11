@@ -23,7 +23,7 @@ const buildInfoParts = (exif: ExifDataType) => {
   return { cameraInfo, lensInfo, settingsParts }
 }
 
-const calcFrameDimensions = (imageWidth: number): { frameHeight: number; fontSize: number } => {
+export const calcFrameDimensions = (imageWidth: number): { frameHeight: number; fontSize: number } => {
   const frameHeight = Math.max(32, Math.min(200, Math.round(imageWidth * 0.05)))
   const fontSize = Math.max(8, Math.min(48, Math.round(frameHeight * 0.23)))
   return { frameHeight, fontSize }

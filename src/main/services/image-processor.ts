@@ -5,7 +5,7 @@ import os from 'node:os'
 import type { BrowserWindow } from 'electron'
 import type { ResizeModeType, OutputFormatType, FrameStyleType, PresetLookupType } from '../../shared/types.js'
 import { readExif } from './exif-reader.js'
-import { applyFrame, hasExifForFrame, calcFrameLayout } from './frame-renderer.js'
+import { applyFrame, hasExifForFrame, calcFrameLayout, calcFrameDimensions } from './frame-renderer.js'
 
 type ProcessImageOptionsType = {
   inputPath: string
@@ -135,6 +135,79 @@ const resolveResizeOptions = (
   }
 }
 
+const constrainFrameByHeight = (
+  targetHeight: number,
+  originalWidth: number,
+  originalHeight: number
+): { innerHeight: number; frameBorderWidth: number } => {
+  // First pass: estimate image width from target height
+  const estImageWidth = Math.round(targetHeight * (originalWidth / originalHeight))
+  const estBorderWidth = Math.max(8, Math.round(estImageWidth * 0.015))
+  const { frameHeight: estFrameHeight } = calcFrameDimensions(Math.max(1, estImageWidth - 2 * estBorderWidth))
+  const estInnerHeight = targetHeight - 2 * estBorderWidth - estFrameHeight
+
+  if (estInnerHeight < 1) {
+    return { innerHeight: targetHeight, frameBorderWidth: 0 }
+  }
+
+  // Correction pass: recalculate from the corrected image width
+  const correctedWidth = Math.round(estInnerHeight * (originalWidth / originalHeight))
+  const borderWidth = Math.max(8, Math.round(correctedWidth * 0.015))
+  const { frameHeight } = calcFrameDimensions(correctedWidth)
+  const innerHeight = targetHeight - 2 * borderWidth - frameHeight
+
+  if (innerHeight < 1) {
+    return { innerHeight: targetHeight, frameBorderWidth: 0 }
+  }
+
+  return { innerHeight, frameBorderWidth: borderWidth }
+}
+
+const adjustForFrame = (
+  width: number | null,
+  height: number | null,
+  resizeOpts: sharp.ResizeOptions,
+  originalWidth: number,
+  originalHeight: number,
+  willApplyFrame: boolean
+): {
+  width: number | null
+  height: number | null
+  resizeOpts: sharp.ResizeOptions
+  frameBorderWidth: number | undefined
+} => {
+  if (!willApplyFrame || (width == null && height == null)) {
+    return { width, height, resizeOpts, frameBorderWidth: undefined }
+  }
+
+  // Both dimensions specified (preset-fit mode)
+  if (width != null && height != null) {
+    const layout = calcFrameLayout(width, height)
+    if (layout.innerWidth < 1 || layout.innerHeight < 1) {
+      return { width, height, resizeOpts, frameBorderWidth: undefined }
+    }
+    return {
+      width: layout.innerWidth,
+      height: layout.innerHeight,
+      resizeOpts,
+      frameBorderWidth: layout.borderWidth
+    }
+  }
+
+  // Width specified, height auto: subtract horizontal frame space only
+  if (width != null) {
+    const borderWidth = Math.max(8, Math.round(width * 0.015))
+    const innerWidth = width - 2 * borderWidth
+    if (innerWidth < 1) return { width, height, resizeOpts, frameBorderWidth: undefined }
+    return { width: innerWidth, height: null, resizeOpts, frameBorderWidth: borderWidth }
+  }
+
+  // Height specified, width auto: two-pass estimation for frame overhead
+  const { innerHeight, frameBorderWidth } = constrainFrameByHeight(height!, originalWidth, originalHeight)
+  if (frameBorderWidth === 0) return { width, height, resizeOpts, frameBorderWidth: undefined }
+  return { width: null, height: innerHeight, resizeOpts, frameBorderWidth }
+}
+
 const buildOutputPathMap = async (
   images: { id: string; path: string; name: string }[],
   outputDir: string,
@@ -215,15 +288,23 @@ const processImage = async (options: ProcessImageOptionsType): Promise<Processed
   }
   const willApplyFrame = needsFrame && exifData != null && hasExifForFrame(exifData)
 
-  let frameBorderWidth: number | undefined
-  if (willApplyFrame && width != null && height != null) {
-    const layout = calcFrameLayout(width, height)
-    if (layout.innerWidth >= 1 && layout.innerHeight >= 1) {
-      width = layout.innerWidth
-      height = layout.innerHeight
-      frameBorderWidth = layout.borderWidth
+  // For aspect-ratio mode: if constraining by width would make the final height
+  // exceed maxSide (due to frame vertical overhead), switch to height constraint
+  if (willApplyFrame && resizeMode.kind === 'aspect-ratio' && width != null && height == null) {
+    const bw = Math.max(8, Math.round(width * 0.015))
+    const iw = width - 2 * bw
+    const estImageHeight = Math.round(iw * (originalHeight / originalWidth))
+    const { frameHeight } = calcFrameDimensions(iw)
+    if (estImageHeight + 2 * bw + frameHeight > width) {
+      height = width
+      width = null
     }
   }
+
+  let frameBorderWidth: number | undefined
+  ;({ width, height, resizeOpts, frameBorderWidth } = adjustForFrame(
+    width, height, resizeOpts, originalWidth, originalHeight, willApplyFrame
+  ))
 
   let pipeline = sharp(inputPath, { sequentialRead: true })
   pipeline = pipeline.rotate()
@@ -390,15 +471,21 @@ export const generatePreview = async (
   }
   const willApplyFrame = needsFrame && exifData != null && hasExifForFrame(exifData)
 
-  let frameBorderWidth: number | undefined
-  if (willApplyFrame && width != null && height != null) {
-    const layout = calcFrameLayout(width, height)
-    if (layout.innerWidth >= 1 && layout.innerHeight >= 1) {
-      width = layout.innerWidth
-      height = layout.innerHeight
-      frameBorderWidth = layout.borderWidth
+  if (willApplyFrame && resizeMode.kind === 'aspect-ratio' && width != null && height == null) {
+    const bw = Math.max(8, Math.round(width * 0.015))
+    const iw = width - 2 * bw
+    const estImageHeight = Math.round(iw * (originalHeight / originalWidth))
+    const { frameHeight } = calcFrameDimensions(iw)
+    if (estImageHeight + 2 * bw + frameHeight > width) {
+      height = width
+      width = null
     }
   }
+
+  let frameBorderWidth: number | undefined
+  ;({ width, height, resizeOpts, frameBorderWidth } = adjustForFrame(
+    width, height, resizeOpts, originalWidth, originalHeight, willApplyFrame
+  ))
 
   let pipeline = sharp(imagePath, { sequentialRead: true })
   pipeline = pipeline.rotate()
