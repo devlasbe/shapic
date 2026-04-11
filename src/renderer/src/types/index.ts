@@ -4,7 +4,7 @@ export type ImageStatusType = 'idle' | 'processing' | 'done' | 'error'
 
 export type OutputFormatType = 'jpeg' | 'webp'
 
-export type FrameStyleType = 'none' | 'simple-bar' | 'card' | 'minimal-white'
+export type FrameStyleType = 'none' | 'minimal-white'
 
 export type PresetCategoryType =
   | 'instagram'

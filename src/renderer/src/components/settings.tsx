@@ -1,12 +1,13 @@
 import { useCallback } from 'react'
 import { useAppStore } from '../stores/app-store'
-import { selectSelectedImage, selectHasImages } from '../stores/selectors'
+import { selectSelectedImage, selectHasImages, selectIsAllDone } from '../stores/selectors'
 import { useProcessing } from '../hooks/use-processing'
 import PresetSelector from './preset-selector'
 import PillButton from './ui/pill-button'
 import Slider from './ui/slider'
 import Button from './ui/button'
-import type { OutputFormatType, FrameStyleType, ResizeFitType } from '../types'
+import Switch from './ui/switch'
+import type { OutputFormatType, ResizeFitType } from '../types'
 
 const Settings = () => {
   const options = useAppStore((s) => s.options)
@@ -14,8 +15,9 @@ const Settings = () => {
   const setResizeMode = useAppStore((s) => s.setResizeMode)
   const progress = useAppStore((s) => s.progress)
   const hasImages = useAppStore(selectHasImages)
+  const isAllDone = useAppStore(selectIsAllDone)
   const selectedImage = useAppStore(selectSelectedImage)
-  const { startProcessing } = useProcessing()
+  const { startSingleProcessing, startBatchProcessing, processingModeRef } = useProcessing()
 
   const handleSelectFolder = useCallback(async () => {
     const folder = await window.api.dialog.openFolder()
@@ -24,7 +26,9 @@ const Settings = () => {
 
   const hasExif = selectedImage?.exifData != null
 
-  const canStart = hasImages && options.presetId && options.outputFolder && !progress.isProcessing
+  const commonDisabled = !options.presetId || !options.outputFolder || progress.isProcessing
+  const canSingle = !!selectedImage && !commonDisabled
+  const canBatch = hasImages && !isAllDone && !commonDisabled
 
   return (
     <div className="flex flex-col h-full">
@@ -97,21 +101,17 @@ const Settings = () => {
 
         {/* EXIF 프레임 */}
         <div className="space-y-2">
-          <label className="text-xs font-medium text-text-secondary">EXIF 프레임</label>
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-medium text-text-secondary">EXIF 프레임</label>
+            <Switch
+              checked={options.frameStyle === 'minimal-white'}
+              onChange={(on) => setOption('frameStyle', on ? 'minimal-white' : 'none')}
+              disabled={selectedImage != null && !hasExif}
+            />
+          </div>
           {!hasExif && selectedImage && (
             <p className="text-[10px] text-text-muted">이 이미지에 EXIF 데이터가 없습니다</p>
           )}
-          <select
-            value={options.frameStyle}
-            onChange={(e) => setOption('frameStyle', e.target.value as FrameStyleType)}
-            disabled={selectedImage != null && !hasExif}
-            className="w-full px-2.5 py-1.5 text-sm bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-text-primary cursor-pointer transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <option value="none">없음</option>
-            <option value="simple-bar">심플 바</option>
-            <option value="card">카드 스타일</option>
-            <option value="minimal-white">미니멀 화이트</option>
-          </select>
         </div>
 
         {/* 출력 폴더 */}
@@ -136,20 +136,35 @@ const Settings = () => {
         </div>
       </div>
 
-      {/* 변환 시작 버튼 */}
-      <div className="p-3 border-t border-border-light">
+      {/* 변환 버튼 */}
+      <div className="p-3 border-t border-border-light space-y-1.5">
         <Button
           className="w-full"
-          disabled={!canStart}
-          onClick={startProcessing}
+          disabled={!canSingle}
+          onClick={startSingleProcessing}
         >
-          {progress.isProcessing ? (
+          {progress.isProcessing && processingModeRef.current === 'single' ? (
             <span className="flex items-center gap-2">
               <div className="w-3.5 h-3.5 rounded-full border-[1.5px] border-white border-t-transparent animate-spin" />
               변환 중...
             </span>
           ) : (
-            '변환 시작'
+            '개별 변환'
+          )}
+        </Button>
+        <Button
+          className="w-full"
+          variant="secondary"
+          disabled={!canBatch}
+          onClick={startBatchProcessing}
+        >
+          {progress.isProcessing && processingModeRef.current === 'batch' ? (
+            <span className="flex items-center gap-2">
+              <div className="w-3.5 h-3.5 rounded-full border-[1.5px] border-border border-t-transparent animate-spin" />
+              변환 중...
+            </span>
+          ) : (
+            '일괄 변환'
           )}
         </Button>
       </div>

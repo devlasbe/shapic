@@ -15,7 +15,7 @@ type ResizeModeType =
   | { kind: 'height'; pixels: number }
 
 type OutputFormatType = 'jpeg' | 'webp'
-type FrameStyleType = 'none' | 'simple-bar' | 'card' | 'minimal-white'
+type FrameStyleType = 'none' | 'minimal-white'
 
 type PresetType = {
   id: string
@@ -176,7 +176,7 @@ const processImage = async (options: ProcessImageOptionsType): Promise<Processed
 
   if (needsFrame && exifData && hasExifForFrame(exifData)) {
     const resizedBuffer = await pipeline.toBuffer()
-    const framedBuffer = await applyFrame(resizedBuffer, exifData, frameStyle as 'simple-bar' | 'card' | 'minimal-white')
+    const framedBuffer = await applyFrame(resizedBuffer, exifData)
 
     let outputPipeline = sharp(framedBuffer)
     if (output.format === 'jpeg') {
@@ -324,7 +324,7 @@ export const generatePreview = async (
   let resultBuffer: Buffer
   if (needsFrame && exifData && hasExifForFrame(exifData)) {
     const resizedBuffer = await pipeline.toBuffer()
-    resultBuffer = await applyFrame(resizedBuffer, exifData, frameStyle as 'simple-bar' | 'card' | 'minimal-white')
+    resultBuffer = await applyFrame(resizedBuffer, exifData)
   } else {
     resultBuffer = await pipeline.toBuffer()
   }

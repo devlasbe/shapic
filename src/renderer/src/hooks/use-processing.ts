@@ -1,15 +1,19 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useRef } from 'react'
 import { useAppStore } from '../stores/app-store.js'
 import type { ProcessingProgressType, BatchResultType } from '../types/index.js'
 
+export type ProcessingModeType = 'single' | 'batch' | null
+
 export const useProcessing = () => {
   const images = useAppStore((s) => s.images)
+  const selectedImageId = useAppStore((s) => s.selectedImageId)
   const options = useAppStore((s) => s.options)
   const setProgress = useAppStore((s) => s.setProgress)
   const resetProgress = useAppStore((s) => s.resetProgress)
   const updateImageStatus = useAppStore((s) => s.updateImageStatus)
   const updateImageResult = useAppStore((s) => s.updateImageResult)
   const updateImageError = useAppStore((s) => s.updateImageError)
+  const processingModeRef = useRef<ProcessingModeType>(null)
 
   useEffect(() => {
     const unsubProgress = window.api.image.onProgress((raw) => {
@@ -53,6 +57,7 @@ export const useProcessing = () => {
       })
 
       setProgress({ isProcessing: false, overallPercent: 100 })
+      processingModeRef.current = null
     })
 
     return () => {
@@ -61,29 +66,51 @@ export const useProcessing = () => {
     }
   }, [images, setProgress, resetProgress, updateImageStatus, updateImageResult, updateImageError])
 
-  const startProcessing = useCallback(async () => {
+  const processImages = useCallback(
+    async (imagesToProcess: typeof images) => {
+      if (imagesToProcess.length === 0 || !options.outputFolder) return
+
+      setProgress({
+        isProcessing: true,
+        currentIndex: 0,
+        totalCount: imagesToProcess.length,
+        overallPercent: 0,
+        currentFileName: imagesToProcess[0].name
+      })
+
+      imagesToProcess.forEach((img) => updateImageStatus(img.id, 'processing'))
+
+      await window.api.image.process({
+        images: imagesToProcess.map((img) => ({ id: img.id, path: img.path, name: img.name })),
+        outputDir: options.outputFolder,
+        presetId: options.presetId,
+        resizeMode: options.resizeMode,
+        output: { format: options.outputFormat, quality: options.quality },
+        frame: options.frameStyle
+      })
+    },
+    [options, setProgress, updateImageStatus]
+  )
+
+  const startSingleProcessing = useCallback(async () => {
+    const image = images.find((img) => img.id === selectedImageId)
+    if (!image) return
+
+    if (image.status === 'done') {
+      updateImageStatus(image.id, 'idle')
+    }
+
+    processingModeRef.current = 'single'
+    await processImages([image])
+  }, [images, selectedImageId, processImages, updateImageStatus])
+
+  const startBatchProcessing = useCallback(async () => {
     const imagesToProcess = images.filter((img) => img.status !== 'done')
-    if (imagesToProcess.length === 0 || !options.outputFolder) return
+    if (imagesToProcess.length === 0) return
 
-    setProgress({
-      isProcessing: true,
-      currentIndex: 0,
-      totalCount: imagesToProcess.length,
-      overallPercent: 0,
-      currentFileName: imagesToProcess[0].name
-    })
+    processingModeRef.current = 'batch'
+    await processImages(imagesToProcess)
+  }, [images, processImages])
 
-    imagesToProcess.forEach((img) => updateImageStatus(img.id, 'processing'))
-
-    await window.api.image.process({
-      images: imagesToProcess.map((img) => ({ id: img.id, path: img.path, name: img.name })),
-      outputDir: options.outputFolder,
-      presetId: options.presetId,
-      resizeMode: options.resizeMode,
-      output: { format: options.outputFormat, quality: options.quality },
-      frame: options.frameStyle
-    })
-  }, [images, options, setProgress, updateImageStatus])
-
-  return { startProcessing }
+  return { startSingleProcessing, startBatchProcessing, processingModeRef }
 }
