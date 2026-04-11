@@ -8,6 +8,11 @@ type PresetModalPropsType = {
   onClose: () => void
 }
 
+const MAX_DIMENSION = 10000
+
+const isValidDimension = (v: number) => Number.isFinite(v) && v >= 1 && v <= MAX_DIMENSION
+const isValidQuality = (v: number) => Number.isFinite(v) && v >= 1 && v <= 100
+
 const PresetModal = ({ onClose }: PresetModalPropsType) => {
   const addCustomPreset = useAppStore((s) => s.addCustomPreset)
 
@@ -18,10 +23,11 @@ const PresetModal = ({ onClose }: PresetModalPropsType) => {
   const [format, setFormat] = useState<OutputFormatType>('jpeg')
   const [quality, setQuality] = useState(100)
 
+  const isValid =
+    name.trim().length > 0 && isValidDimension(width) && isValidDimension(height) && isValidQuality(quality)
+
   const handleSave = async () => {
-    if (!name.trim()) return
-    if (width < 1 || height < 1) return
-    if (quality < 1 || quality > 100) return
+    if (!isValid) return
 
     const saved = await window.api.preset.save({
       name: name.trim(),
@@ -78,8 +84,12 @@ const PresetModal = ({ onClose }: PresetModalPropsType) => {
               value={width}
               onChange={(e) => setWidth(Number(e.target.value))}
               min={1}
+              max={MAX_DIMENSION}
               className="w-full mt-1.5 px-2.5 py-1.5 text-sm bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
+            {!isValidDimension(width) && (
+              <p className="mt-1 text-xs text-red-500">1~{MAX_DIMENSION} 사이 값을 입력해 주세요</p>
+            )}
           </div>
           <div className="flex-1">
             <label className="text-xs font-medium text-text-secondary">높이 (px)</label>
@@ -88,8 +98,12 @@ const PresetModal = ({ onClose }: PresetModalPropsType) => {
               value={height}
               onChange={(e) => setHeight(Number(e.target.value))}
               min={1}
+              max={MAX_DIMENSION}
               className="w-full mt-1.5 px-2.5 py-1.5 text-sm bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
+            {!isValidDimension(height) && (
+              <p className="mt-1 text-xs text-red-500">1~{MAX_DIMENSION} 사이 값을 입력해 주세요</p>
+            )}
           </div>
         </div>
 
@@ -115,6 +129,9 @@ const PresetModal = ({ onClose }: PresetModalPropsType) => {
               max={100}
               className="w-full mt-1.5 px-2.5 py-1.5 text-sm bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
+            {!isValidQuality(quality) && (
+              <p className="mt-1 text-xs text-red-500">1~100 사이 값을 입력해 주세요</p>
+            )}
           </div>
         </div>
 
@@ -122,7 +139,7 @@ const PresetModal = ({ onClose }: PresetModalPropsType) => {
           <Button variant="secondary" className="flex-1" onClick={onClose}>
             취소
           </Button>
-          <Button className="flex-1" onClick={handleSave} disabled={!name.trim()}>
+          <Button className="flex-1" onClick={handleSave} disabled={!isValid}>
             저장
           </Button>
         </div>
