@@ -26,7 +26,7 @@ export const readExif = async (imagePath: string): Promise<ExifDataType | null> 
 
     if (!exifBuffer) return null
 
-    const parsed = exifReader(exifBuffer) as Record<string, Record<string, unknown>>
+    const parsed = exifReader(exifBuffer) as unknown as Record<string, Record<string, unknown>>
 
     const image = parsed?.Image ?? parsed?.image ?? {}
     const photo = parsed?.Photo ?? parsed?.exif ?? {}
