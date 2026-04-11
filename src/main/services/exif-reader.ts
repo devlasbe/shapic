@@ -1,16 +1,8 @@
 import sharp from 'sharp'
 import exifReader from 'exif-reader'
+import type { ExifDataType } from '../../shared/types.js'
 
-export type ExifDataType = {
-  cameraBrand: string | null
-  cameraModel: string | null
-  lens: string | null
-  aperture: string | null
-  shutterSpeed: string | null
-  iso: number | null
-  focalLength: string | null
-  dateTime: string | null
-}
+export type { ExifDataType }
 
 const formatShutterSpeed = (exposureTime: number | undefined): string | null => {
   if (!exposureTime) return null
@@ -26,7 +18,7 @@ export const readExif = async (imagePath: string): Promise<ExifDataType | null> 
 
     if (!exifBuffer) return null
 
-    const parsed = exifReader(exifBuffer) as Record<string, Record<string, unknown>>
+    const parsed = exifReader(exifBuffer) as unknown as Record<string, Record<string, unknown>>
 
     const image = parsed?.Image ?? parsed?.image ?? {}
     const photo = parsed?.Photo ?? parsed?.exif ?? {}
@@ -67,7 +59,8 @@ export const readExif = async (imagePath: string): Promise<ExifDataType | null> 
       focalLength: focalLengthValue ? `${focalLengthValue}mm` : null,
       dateTime: dateTimeStr
     }
-  } catch {
+  } catch (err) {
+    console.warn(`EXIF 파싱 실패 (${imagePath}):`, err)
     return null
   }
 }

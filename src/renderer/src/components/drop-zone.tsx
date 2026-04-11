@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useAppStore } from '../stores/app-store'
 import { cn } from '../utils/cn'
+import { SUPPORTED_EXTENSIONS } from '../../../shared/constants.js'
 import type { ImageFileType } from '../types'
 
 const DropZone = () => {
@@ -44,9 +45,8 @@ const DropZone = () => {
       setIsDragOver(false)
 
       const files = Array.from(e.dataTransfer.files)
-      const imageFiles = files.filter((f) =>
-        /\.(jpe?g|png|webp|heif|heic|tiff?)$/i.test(f.name)
-      )
+      const extPattern = new RegExp(`\\.(${SUPPORTED_EXTENSIONS.join('|')})$`, 'i')
+      const imageFiles = files.filter((f) => extPattern.test(f.name))
       const paths = imageFiles.map((f) => (f as File & { path: string }).path)
       await processFiles(paths)
     },

@@ -1,6 +1,5 @@
 import { ipcMain, dialog, BrowserWindow } from 'electron'
-
-const SUPPORTED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'heif', 'heic', 'tiff', 'tif']
+import { SUPPORTED_EXTENSIONS } from '../../shared/constants.js'
 
 export const registerDialogHandlers = () => {
   ipcMain.handle('dialog:openFile', async (event) => {

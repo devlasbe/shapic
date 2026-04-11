@@ -4,3 +4,6 @@ dist/
 *.dmg
 *.zip
 .DS_Store
+*.tsbuildinfo
+docs
+.superpowers

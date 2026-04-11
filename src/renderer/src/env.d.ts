@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 import type {
   LoadedImageType,
   BatchProcessOptionsType,
@@ -7,9 +9,9 @@ import type {
   CustomPresetInputType,
   PreviewRequestType,
   PreviewResultType
-} from '../renderer/src/types/index.js'
+} from './types'
 
-export type ShapicApiType = {
+type ShapicApiType = {
   image: {
     load: (filePaths: string[]) => Promise<LoadedImageType[]>
     process: (options: BatchProcessOptionsType) => Promise<void>

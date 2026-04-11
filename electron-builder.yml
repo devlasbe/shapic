@@ -1,5 +1,6 @@
-appId: com.imageforge.app
-productName: ImageForge
+appId: com.shapic.app
+productName: Shapic
+copyright: Copyright © 2026 lasbe
 directories:
   buildResources: resources
   output: dist
@@ -13,14 +14,9 @@ asarUnpack:
 mac:
   target:
     - dmg
-    - zip
   category: public.app-category.graphics-design
-  artifactName: "${productName}-${version}-${arch}.${ext}"
+  artifactName: "${productName}-${arch}.${ext}"
 win:
   target:
     - nsis
-    - portable
-linux:
-  target:
-    - AppImage
-    - deb
+  artifactName: "${productName}-Setup.${ext}"

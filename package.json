@@ -1,5 +1,6 @@
 {
-  "name": "imageforge",
+  "name": "shapic",
+  "productName": "Shapic",
   "version": "1.0.0",
   "description": "Image resize & optimize desktop app for SNS platforms",
   "type": "module",
@@ -16,8 +17,12 @@
     "electron",
     "sharp"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": {
+    "name": "lasbe",
+    "email": "devlasbe@gmail.com",
+    "url": "https://lasbe.kr"
+  },
+  "license": "GPL-3.0",
   "dependencies": {
     "clsx": "^2.1.1",
     "electron-store": "^11.0.2",

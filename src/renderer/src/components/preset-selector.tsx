@@ -14,7 +14,7 @@ const PresetSelector = () => {
   const grouped = useMemo(() => getGroupedPresets(customPresets), [customPresets])
 
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col gap-2.5">
       <div className="flex items-center justify-between">
         <label className="text-xs font-medium text-text-secondary">프리셋</label>
         <button
