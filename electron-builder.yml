@@ -1,0 +1,26 @@
+appId: com.imageforge.app
+productName: ImageForge
+directories:
+  buildResources: resources
+  output: dist
+files:
+  - "out/**/*"
+  - "node_modules/sharp/**/*"
+  - "node_modules/@img/**/*"
+asarUnpack:
+  - "node_modules/sharp/**/*.node"
+  - "node_modules/@img/**/*.node"
+mac:
+  target:
+    - dmg
+    - zip
+  category: public.app-category.graphics-design
+  artifactName: "${productName}-${version}-${arch}.${ext}"
+win:
+  target:
+    - nsis
+    - portable
+linux:
+  target:
+    - AppImage
+    - deb
