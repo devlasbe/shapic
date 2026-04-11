@@ -1,5 +1,6 @@
 {
-  "name": "photo-layer",
+  "name": "shapic",
+  "productName": "Shapic",
   "version": "1.0.0",
   "description": "Image resize & optimize desktop app for SNS platforms",
   "type": "module",
@@ -16,7 +17,11 @@
     "electron",
     "sharp"
   ],
-  "author": "",
+  "author": {
+    "name": "lasbe",
+    "email": "devlasbe@gmail.com",
+    "url": "https://lasbe.kr"
+  },
   "license": "ISC",
   "dependencies": {
     "clsx": "^2.1.1",

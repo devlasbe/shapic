@@ -9,7 +9,7 @@ import type {
   PreviewResultType
 } from '../renderer/src/types/index.js'
 
-export type PhotoLayerApiType = {
+export type ShapicApiType = {
   image: {
     load: (filePaths: string[]) => Promise<LoadedImageType[]>
     process: (options: BatchProcessOptionsType) => Promise<void>
@@ -30,6 +30,6 @@ export type PhotoLayerApiType = {
 
 declare global {
   interface Window {
-    api: PhotoLayerApiType
+    api: ShapicApiType
   }
 }

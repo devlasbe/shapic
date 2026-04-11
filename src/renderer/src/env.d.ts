@@ -11,7 +11,7 @@ import type {
   PreviewResultType
 } from './types'
 
-type PhotoLayerApiType = {
+type ShapicApiType = {
   image: {
     load: (filePaths: string[]) => Promise<LoadedImageType[]>
     process: (options: BatchProcessOptionsType) => Promise<void>
@@ -32,6 +32,6 @@ type PhotoLayerApiType = {
 
 declare global {
   interface Window {
-    api: PhotoLayerApiType
+    api: ShapicApiType
   }
 }

@@ -1,5 +1,6 @@
-appId: com.photo-layer.app
-productName: PhotoLayer
+appId: com.shapic.app
+productName: Shapic
+copyright: Copyright © 2026 lasbe
 directories:
   buildResources: resources
   output: dist

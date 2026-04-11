@@ -150,7 +150,7 @@ const processImage = async (options: ProcessImageOptionsType): Promise<Processed
 
   const outputExt = output.format === 'jpeg' ? '.jpg' : '.webp'
   const baseName = path.basename(inputPath, path.extname(inputPath))
-  const outputPath = path.join(outputDir, `${baseName}_photo-layer${outputExt}`)
+  const outputPath = path.join(outputDir, `${baseName}_shapic${outputExt}`)
 
   const needsFrame = frameStyle !== 'none'
   let exifData = null
