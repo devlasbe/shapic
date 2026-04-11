@@ -133,7 +133,7 @@ const Settings = () => {
             <label className="text-xs font-medium text-text-secondary">출력 폴더</label>
             <button
               onClick={handleSelectFolder}
-              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-sm bg-card border border-border rounded-lg hover:border-primary/30 transition-colors cursor-pointer text-left"
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-sm bg-background border border-border rounded-lg hover:border-primary/30 transition-colors cursor-pointer text-left"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-text-muted shrink-0">
                 <path d="M1.5 3.5V11C1.5 11.5523 1.94772 12 2.5 12H11.5C12.0523 12 12.5 11.5523 12.5 11V5.5C12.5 4.94772 12.0523 4.5 11.5 4.5H7L5.5 2.5H2.5C1.94772 2.5 1.5 2.94772 1.5 3.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
