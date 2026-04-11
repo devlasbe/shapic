@@ -1,42 +1,27 @@
-// --- 상태 & 옵션 유니언 타입 ---
+// --- 공유 타입 re-export ---
+
+export type {
+  OutputFormatType,
+  FrameStyleType,
+  ResizeFitType,
+  PresetCategoryType,
+  ResizeModeType,
+  ExifDataType,
+  PresetType,
+  PresetLookupType
+} from '../../../shared/types.js'
+
+import type {
+  ExifDataType,
+  ResizeModeType,
+  OutputFormatType,
+  FrameStyleType,
+  PresetType
+} from '../../../shared/types.js'
+
+// --- 상태 타입 (renderer 전용) ---
 
 export type ImageStatusType = 'idle' | 'processing' | 'done' | 'error'
-
-export type OutputFormatType = 'jpeg' | 'webp'
-
-export type FrameStyleType = 'none' | 'minimal-white'
-
-export type PresetCategoryType =
-  | 'instagram'
-  | 'facebook'
-  | 'twitter'
-  | 'youtube'
-  | 'tiktok'
-  | 'linkedin'
-  | 'general'
-
-export type ResizeFitType = 'cover' | 'contain' | 'fill' | 'inside' | 'outside'
-
-export type ResizeModeType =
-  | { kind: 'preset-fit'; fit: ResizeFitType }
-  | { kind: 'aspect-ratio' }
-  | { kind: 'long-side'; pixels: number }
-  | { kind: 'short-side'; pixels: number }
-  | { kind: 'width'; pixels: number }
-  | { kind: 'height'; pixels: number }
-
-// --- EXIF 데이터 ---
-
-export type ExifDataType = {
-  cameraBrand: string | null
-  cameraModel: string | null
-  lens: string | null
-  aperture: string | null
-  shutterSpeed: string | null
-  iso: number | null
-  focalLength: string | null
-  dateTime: string | null
-}
 
 // --- 이미지 파일 ---
 
@@ -67,18 +52,6 @@ export type LoadedImageType = {
 }
 
 // --- 프리셋 ---
-
-export type PresetType = {
-  id: string
-  name: string
-  category: PresetCategoryType
-  width: number | null
-  height: number | null
-  format: OutputFormatType
-  quality: number
-  description: string
-  isCustom: boolean
-}
 
 export type CustomPresetInputType = Omit<PresetType, 'id' | 'isCustom'>
 

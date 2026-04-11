@@ -3,32 +3,14 @@ import path from 'node:path'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import type { BrowserWindow } from 'electron'
+import type { ResizeModeType, OutputFormatType, FrameStyleType, PresetLookupType } from '../../shared/types.js'
 import { readExif } from './exif-reader.js'
 import { applyFrame, hasExifForFrame } from './frame-renderer.js'
-
-type ResizeModeType =
-  | { kind: 'preset-fit'; fit: 'cover' | 'contain' | 'fill' | 'inside' | 'outside' }
-  | { kind: 'aspect-ratio' }
-  | { kind: 'long-side'; pixels: number }
-  | { kind: 'short-side'; pixels: number }
-  | { kind: 'width'; pixels: number }
-  | { kind: 'height'; pixels: number }
-
-type OutputFormatType = 'jpeg' | 'webp'
-type FrameStyleType = 'none' | 'minimal-white'
-
-type PresetType = {
-  id: string
-  width: number
-  height: number | null
-  format: OutputFormatType
-  quality: number
-}
 
 type ProcessImageOptionsType = {
   inputPath: string
   outputDir: string
-  preset: PresetType | null
+  preset: PresetLookupType | null
   resizeMode: ResizeModeType
   output: { format: OutputFormatType; quality: number }
   frameStyle: FrameStyleType
@@ -37,7 +19,7 @@ type ProcessImageOptionsType = {
 type BatchProcessOptionsType = {
   images: { id: string; path: string; name: string }[]
   outputDir: string
-  preset: PresetType | null
+  preset: PresetLookupType | null
   resizeMode: ResizeModeType
   output: { format: OutputFormatType; quality: number }
   frameStyle: FrameStyleType
@@ -70,7 +52,7 @@ type ProcessingProgressType = {
 
 const resolveResizeOptions = (
   mode: ResizeModeType,
-  preset: PresetType | null,
+  preset: PresetLookupType | null,
   originalWidth: number,
   originalHeight: number
 ): { width: number | null; height: number | null; options: sharp.ResizeOptions } => {
@@ -148,8 +130,11 @@ const processImage = async (options: ProcessImageOptionsType): Promise<Processed
   const { inputPath, outputDir, preset, resizeMode, output, frameStyle } = options
 
   const metadata = await sharp(inputPath).metadata()
-  const originalWidth = metadata.width!
-  const originalHeight = metadata.height!
+  if (!metadata.width || !metadata.height) {
+    throw new Error(`이미지 메타데이터를 읽을 수 없습니다: ${path.basename(inputPath)}`)
+  }
+  const originalWidth = metadata.width
+  const originalHeight = metadata.height
   const originalStat = await fs.stat(inputPath)
 
   const { width, height, options: resizeOpts } = resolveResizeOptions(
@@ -294,15 +279,18 @@ export const processBatch = async (
 
 export const generatePreview = async (
   imagePath: string,
-  preset: PresetType | null,
+  preset: PresetLookupType | null,
   resizeMode: ResizeModeType,
   outputFormat: OutputFormatType,
   quality: number,
   frameStyle: FrameStyleType
 ): Promise<{ dataUrl: string; width: number; height: number; estimatedSize: number }> => {
   const metadata = await sharp(imagePath).metadata()
-  const originalWidth = metadata.width!
-  const originalHeight = metadata.height!
+  if (!metadata.width || !metadata.height) {
+    throw new Error(`이미지 메타데이터를 읽을 수 없습니다: ${path.basename(imagePath)}`)
+  }
+  const originalWidth = metadata.width
+  const originalHeight = metadata.height
 
   const { width, height, options: resizeOpts } = resolveResizeOptions(
     resizeMode,
@@ -352,14 +340,17 @@ export const generatePreview = async (
 
 export const loadImageMetadata = async (filePath: string) => {
   const metadata = await sharp(filePath).metadata()
+  if (!metadata.width || !metadata.height) {
+    throw new Error(`이미지 메타데이터를 읽을 수 없습니다: ${path.basename(filePath)}`)
+  }
   const stat = await fs.stat(filePath)
   const exifData = await readExif(filePath)
 
   return {
     path: filePath,
     name: path.basename(filePath),
-    width: metadata.width!,
-    height: metadata.height!,
+    width: metadata.width,
+    height: metadata.height,
     format: metadata.format ?? 'unknown',
     size: stat.size,
     exifData

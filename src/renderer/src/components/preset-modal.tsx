@@ -20,6 +20,8 @@ const PresetModal = ({ onClose }: PresetModalPropsType) => {
 
   const handleSave = async () => {
     if (!name.trim()) return
+    if (width < 1 || height < 1) return
+    if (quality < 1 || quality > 100) return
 
     const saved = await window.api.preset.save({
       name: name.trim(),

@@ -106,7 +106,7 @@ const Settings = () => {
             <Switch
               checked={options.frameStyle === 'minimal-white'}
               onChange={(on) => setOption('frameStyle', on ? 'minimal-white' : 'none')}
-              disabled={selectedImage != null && !hasExif}
+              disabled={!options.presetId || (selectedImage != null && !hasExif)}
             />
           </div>
           {!hasExif && selectedImage && (

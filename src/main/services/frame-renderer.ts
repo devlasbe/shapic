@@ -1,5 +1,5 @@
 import sharp from 'sharp'
-import type { ExifDataType } from './exif-reader.js'
+import type { ExifDataType } from '../../shared/types.js'
 
 type FrameContextType = {
   imageWidth: number
@@ -44,8 +44,11 @@ export const applyFrame = async (
   exif: ExifDataType
 ): Promise<Buffer> => {
   const meta = await sharp(resizedImageBuffer).metadata()
-  const imageWidth = meta.width!
-  const imageHeight = meta.height!
+  if (!meta.width || !meta.height) {
+    throw new Error('프레임 적용을 위한 이미지 크기를 읽을 수 없습니다')
+  }
+  const imageWidth = meta.width
+  const imageHeight = meta.height
 
   const { svg, frameHeight } = generateMinimalWhiteSvg({ imageWidth, exif })
 

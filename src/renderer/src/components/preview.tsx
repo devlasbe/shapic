@@ -56,7 +56,7 @@ const Preview = () => {
 
     const timer = setTimeout(loadPreview, PREVIEW_DEBOUNCE_MS)
     return () => clearTimeout(timer)
-  }, [selectedImage?.id, options.presetId, JSON.stringify(options.resizeMode), options.outputFormat, options.quality, options.frameStyle])
+  }, [loadPreview, selectedImage?.id, options.presetId])
 
   if (!selectedImage) {
     return (
