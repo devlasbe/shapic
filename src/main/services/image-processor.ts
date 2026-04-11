@@ -5,7 +5,7 @@ import os from 'node:os'
 import type { BrowserWindow } from 'electron'
 import type { ResizeModeType, OutputFormatType, FrameStyleType, PresetLookupType } from '../../shared/types.js'
 import { readExif } from './exif-reader.js'
-import { applyFrame, hasExifForFrame } from './frame-renderer.js'
+import { applyFrame, hasExifForFrame, calcFrameLayout } from './frame-renderer.js'
 
 type ProcessImageOptionsType = {
   inputPath: string
@@ -81,14 +81,19 @@ const resolveResizeOptions = (
       }
     }
     case 'aspect-ratio': {
-      const targetWidth = preset?.width ?? 1920
+      // Use the preset's larger dimension as long-side target; scale proportionally.
+      if (!preset || (preset.width === null && preset.height === null)) {
+        return { width: null, height: null, options: {} }
+      }
+      const maxSide = Math.max(preset.width ?? 0, preset.height ?? 0)
+      if (maxSide <= 0) {
+        return { width: null, height: null, options: {} }
+      }
+      const isLandscape = originalWidth >= originalHeight
       return {
-        width: targetWidth,
-        height: null,
-        options: {
-          fit: 'inside',
-          withoutEnlargement: true
-        }
+        width: isLandscape ? maxSide : null,
+        height: isLandscape ? null : maxSide,
+        options: { fit: 'inside', withoutEnlargement: false }
       }
     }
     case 'long-side': {
@@ -196,12 +201,29 @@ const processImage = async (options: ProcessImageOptionsType): Promise<Processed
   const originalHeight = metadata.height
   const originalStat = await fs.stat(inputPath)
 
-  const { width, height, options: resizeOpts } = resolveResizeOptions(
+  let { width, height, options: resizeOpts } = resolveResizeOptions(
     resizeMode,
     preset,
     originalWidth,
     originalHeight
   )
+
+  const needsFrame = frameStyle !== 'none'
+  let exifData = null
+  if (needsFrame) {
+    exifData = await readExif(inputPath)
+  }
+  const willApplyFrame = needsFrame && exifData != null && hasExifForFrame(exifData)
+
+  let frameBorderWidth: number | undefined
+  if (willApplyFrame && width != null && height != null) {
+    const layout = calcFrameLayout(width, height)
+    if (layout.innerWidth >= 1 && layout.innerHeight >= 1) {
+      width = layout.innerWidth
+      height = layout.innerHeight
+      frameBorderWidth = layout.borderWidth
+    }
+  }
 
   let pipeline = sharp(inputPath, { sequentialRead: true })
   pipeline = pipeline.rotate()
@@ -214,16 +236,9 @@ const processImage = async (options: ProcessImageOptionsType): Promise<Processed
       `${path.basename(inputPath, path.extname(inputPath))}_shapic${output.format === 'jpeg' ? '.jpg' : '.webp'}`
     )
 
-  const needsFrame = frameStyle !== 'none'
-  let exifData = null
-
-  if (needsFrame) {
-    exifData = await readExif(inputPath)
-  }
-
-  if (needsFrame && exifData && hasExifForFrame(exifData)) {
+  if (willApplyFrame) {
     const resizedBuffer = await pipeline.toBuffer()
-    const framedBuffer = await applyFrame(resizedBuffer, exifData)
+    const framedBuffer = await applyFrame(resizedBuffer, exifData!, frameBorderWidth)
 
     let outputPipeline = sharp(framedBuffer)
     if (output.format === 'jpeg') {
@@ -361,27 +376,38 @@ export const generatePreview = async (
   const originalWidth = metadata.width
   const originalHeight = metadata.height
 
-  const { width, height, options: resizeOpts } = resolveResizeOptions(
+  let { width, height, options: resizeOpts } = resolveResizeOptions(
     resizeMode,
     preset,
     originalWidth,
     originalHeight
   )
 
-  let pipeline = sharp(imagePath, { sequentialRead: true })
-  pipeline = pipeline.rotate()
-  pipeline = pipeline.resize(width, height, resizeOpts)
-
   const needsFrame = frameStyle !== 'none'
   let exifData = null
   if (needsFrame) {
     exifData = await readExif(imagePath)
   }
+  const willApplyFrame = needsFrame && exifData != null && hasExifForFrame(exifData)
+
+  let frameBorderWidth: number | undefined
+  if (willApplyFrame && width != null && height != null) {
+    const layout = calcFrameLayout(width, height)
+    if (layout.innerWidth >= 1 && layout.innerHeight >= 1) {
+      width = layout.innerWidth
+      height = layout.innerHeight
+      frameBorderWidth = layout.borderWidth
+    }
+  }
+
+  let pipeline = sharp(imagePath, { sequentialRead: true })
+  pipeline = pipeline.rotate()
+  pipeline = pipeline.resize(width, height, resizeOpts)
 
   let resultBuffer: Buffer
-  if (needsFrame && exifData && hasExifForFrame(exifData)) {
+  if (willApplyFrame) {
     const resizedBuffer = await pipeline.toBuffer()
-    resultBuffer = await applyFrame(resizedBuffer, exifData)
+    resultBuffer = await applyFrame(resizedBuffer, exifData!, frameBorderWidth)
   } else {
     resultBuffer = await pipeline.toBuffer()
   }
