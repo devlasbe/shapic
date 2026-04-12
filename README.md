@@ -28,7 +28,7 @@ SNS 플랫폼에 최적화된 이미지 리사이즈 & 최적화 데스크톱 �
 | --------------------- | -------------------------------------------------------------- |
 | macOS (Apple Silicon) | [다운로드](https://github.com/devlasbe/shapic/releases/latest/download/Shapic-arm64.dmg) |
 | macOS (Intel)         | [다운로드](https://github.com/devlasbe/shapic/releases/latest/download/Shapic-x64.dmg) |
-| Windows               | [다운로드](https://github.com/devlasbe/shapic/releases/latest/download/Shapic-Setup.exe) |
+| Windows               | [다운로드](https://github.com/devlasbe/shapic/releases/latest/download/Shapic-Windows.zip) |
 
 ## macOS 설치 안내
 
@@ -101,7 +101,7 @@ pnpm dev
 # 프로덕션 빌드
 pnpm build
 
-# 앱 패키징 (dmg / exe)
+# 앱 패키징 (dmg / zip)
 pnpm package
 ```
 

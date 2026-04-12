@@ -18,5 +18,5 @@ mac:
   artifactName: "${productName}-${arch}.${ext}"
 win:
   target:
-    - nsis
-  artifactName: "${productName}-Setup.${ext}"
+    - zip
+  artifactName: "${productName}-Windows.${ext}"

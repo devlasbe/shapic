@@ -73,7 +73,7 @@ jobs:
           name: release-${{ matrix.platform }}-${{ matrix.arch }}
           path: |
             dist/*.dmg
-            dist/*.exe
+            dist/*.zip
           if-no-files-found: error
           retention-days: 1
 
