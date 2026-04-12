@@ -1,6 +1,9 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
 
 contextBridge.exposeInMainWorld('api', {
+  app: {
+    getVersion: () => ipcRenderer.invoke('app:getVersion')
+  },
   image: {
     load: (filePaths: string[]) => ipcRenderer.invoke('image:load', filePaths),
     process: (options: unknown) => ipcRenderer.invoke('image:process', options),

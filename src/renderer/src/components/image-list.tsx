@@ -3,6 +3,8 @@ import { useAppStore } from '../stores/app-store'
 import { cn } from '../utils/cn'
 import { formatFileSize } from '../utils/format'
 import { processFiles } from '../utils/process-files'
+import { showErrorToast, parseIpcError } from '../utils/toast'
+import { ERROR_CODES, ERROR_MESSAGES } from '../../../shared/errors'
 import DropZone from './drop-zone'
 import type { ImageFileType } from '../types'
 
@@ -11,13 +13,17 @@ const StatusIcon = ({ status }: { status: ImageFileType['status'] }) => {
     case 'idle':
       return <div className="w-1.5 h-1.5 rounded-full bg-border" />
     case 'processing':
-      return (
-        <div className="w-3 h-3 rounded-full border-[1.5px] border-primary border-t-transparent animate-spin" />
-      )
+      return <div className="w-3 h-3 rounded-full border-[1.5px] border-primary border-t-transparent animate-spin" />
     case 'done':
       return (
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-success">
-          <path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="M2.5 6L5 8.5L9.5 3.5"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       )
     case 'error':
@@ -63,14 +69,18 @@ const ImageList = () => {
   const images = useAppStore((s) => s.images)
   const selectedImageId = useAppStore((s) => s.selectedImageId)
   const selectImage = useAppStore((s) => s.selectImage)
-  const removeImage = useAppStore((s) => s.removeImage)
   const clearImages = useAppStore((s) => s.clearImages)
 
   const handleClickAdd = useCallback(async () => {
-    const paths = await window.api.dialog.openFile()
-    if (!paths) return
-    const imageFiles = await processFiles(paths)
-    if (imageFiles.length > 0) useAppStore.getState().addImages(imageFiles)
+    try {
+      const paths = await window.api.dialog.openFile()
+      if (!paths) return
+      const imageFiles = await processFiles(paths)
+      if (imageFiles.length > 0) useAppStore.getState().addImages(imageFiles)
+    } catch (err) {
+      const message = parseIpcError(err, ERROR_MESSAGES[ERROR_CODES.DIALOG_OPEN_FILE_FAILED])
+      showErrorToast(message)
+    }
   }, [])
 
   if (images.length === 0) {

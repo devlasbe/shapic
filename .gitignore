@@ -5,5 +5,5 @@ dist/
 *.zip
 .DS_Store
 *.tsbuildinfo
-docs
+docs/superpowers/
 .superpowers

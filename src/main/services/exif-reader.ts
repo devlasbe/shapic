@@ -1,6 +1,7 @@
 import sharp from 'sharp'
 import exifReader from 'exif-reader'
 import type { ExifDataType } from '../../shared/types.js'
+import { ERROR_CODES, formatErrorMessage } from '../../shared/errors.js'
 
 export type { ExifDataType }
 
@@ -41,10 +42,7 @@ export const readExif = async (imagePath: string): Promise<ExifDataType | null> 
 
     let dateTimeStr: string | null = null
     if (dateTimeOriginal) {
-      dateTimeStr =
-        dateTimeOriginal instanceof Date
-          ? dateTimeOriginal.toISOString()
-          : String(dateTimeOriginal)
+      dateTimeStr = dateTimeOriginal instanceof Date ? dateTimeOriginal.toISOString() : String(dateTimeOriginal)
     } else if (dateTime) {
       dateTimeStr = String(dateTime)
     }
@@ -60,7 +58,7 @@ export const readExif = async (imagePath: string): Promise<ExifDataType | null> 
       dateTime: dateTimeStr
     }
   } catch (err) {
-    console.warn(`EXIF 파싱 실패 (${imagePath}):`, err)
+    console.warn(formatErrorMessage(ERROR_CODES.EXIF_PARSE_FAILED, imagePath), err)
     return null
   }
 }

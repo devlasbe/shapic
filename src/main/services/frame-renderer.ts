@@ -1,5 +1,6 @@
 import sharp from 'sharp'
 import type { ExifDataType } from '../../shared/types.js'
+import { AppError, ERROR_CODES } from '../../shared/errors.js'
 
 type FrameContextType = {
   imageWidth: number
@@ -7,12 +8,7 @@ type FrameContextType = {
 }
 
 const escapeXml = (str: string): string =>
-  str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;')
+  str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;')
 
 const buildInfoParts = (exif: ExifDataType) => {
   const cameraInfo = [exif.cameraBrand, exif.cameraModel].filter(Boolean).join(' ')
@@ -63,40 +59,52 @@ export const applyFrame = async (
 ): Promise<Buffer> => {
   const meta = await sharp(resizedImageBuffer).metadata()
   if (!meta.width || !meta.height) {
-    throw new Error('프레임 적용을 위한 이미지 크기를 읽을 수 없습니다')
+    throw new AppError(ERROR_CODES.FRAME_SIZE_READ_FAILED)
   }
   const imageWidth = meta.width
   const imageHeight = meta.height
 
   const { svg, frameHeight } = generateMinimalWhiteSvg({ imageWidth, exif })
+  try {
+    const framePng = await sharp(Buffer.from(svg)).resize(imageWidth, frameHeight).png().toBuffer()
 
-  const framePng = await sharp(Buffer.from(svg)).resize(imageWidth, frameHeight).png().toBuffer()
+    const bgColor = { r: 255, g: 255, b: 255, alpha: 1 }
+    const borderWidth = overrideBorderWidth ?? Math.max(8, Math.round(imageWidth * 0.015))
 
-  const bgColor = { r: 255, g: 255, b: 255, alpha: 1 }
-  const borderWidth = overrideBorderWidth ?? Math.max(8, Math.round(imageWidth * 0.015))
-
-  const extended = await sharp(resizedImageBuffer)
-    .extend({
-      top: borderWidth,
-      bottom: frameHeight + borderWidth,
-      left: borderWidth,
-      right: borderWidth,
-      background: bgColor
-    })
-    .composite([
-      {
-        input: framePng,
-        top: imageHeight + borderWidth,
+    const extended = await sharp(resizedImageBuffer)
+      .extend({
+        top: borderWidth,
+        bottom: frameHeight + borderWidth,
         left: borderWidth,
-        blend: 'over'
-      }
-    ])
-    .toBuffer()
+        right: borderWidth,
+        background: bgColor
+      })
+      .composite([
+        {
+          input: framePng,
+          top: imageHeight + borderWidth,
+          left: borderWidth,
+          blend: 'over'
+        }
+      ])
+      .toBuffer()
 
-  return extended
+    return extended
+  } catch (err) {
+    if (err instanceof AppError) throw err
+    throw new AppError(ERROR_CODES.FRAME_RENDER_FAILED)
+  }
 }
 
 export const hasExifForFrame = (exif: ExifDataType | null): boolean => {
   if (!exif) return false
-  return !!(exif.cameraBrand || exif.cameraModel || exif.lens || exif.aperture || exif.shutterSpeed || exif.iso || exif.focalLength)
+  return !!(
+    exif.cameraBrand ||
+    exif.cameraModel ||
+    exif.lens ||
+    exif.aperture ||
+    exif.shutterSpeed ||
+    exif.iso ||
+    exif.focalLength
+  )
 }

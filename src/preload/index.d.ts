@@ -10,6 +10,9 @@ import type {
 } from '../renderer/src/types/index.js'
 
 export type ShapicApiType = {
+  app: {
+    getVersion: () => Promise<string>
+  }
   image: {
     load: (filePaths: string[]) => Promise<LoadedImageType[]>
     process: (options: BatchProcessOptionsType) => Promise<void>

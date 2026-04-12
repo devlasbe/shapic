@@ -4,6 +4,7 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import type { BrowserWindow } from 'electron'
 import type { ResizeModeType, OutputFormatType, FrameStyleType, PresetLookupType } from '../../shared/types.js'
+import { AppError, ERROR_CODES } from '../../shared/errors.js'
 import { readExif } from './exif-reader.js'
 import { applyFrame, hasExifForFrame, calcFrameLayout, calcFrameDimensions } from './frame-renderer.js'
 
@@ -59,7 +60,7 @@ const resolveResizeOptions = (
 ): { width: number | null; height: number | null; options: sharp.ResizeOptions } => {
   switch (mode.kind) {
     case 'preset-fit': {
-      if (!preset) throw new Error('Preset is required for preset-fit mode')
+      if (!preset) throw new AppError(ERROR_CODES.IMAGE_PRESET_RESOLVE_FAILED)
       if (preset.width === null && preset.height === null) {
         return {
           width: null,
@@ -265,21 +266,36 @@ const buildOutputPathMap = async (
 
 const processImage = async (options: ProcessImageOptionsType): Promise<ProcessedResultType> => {
   const { inputPath, outputDir, preset, resizeMode, output, frameStyle } = options
+  const filename = path.basename(inputPath)
 
-  const metadata = await sharp(inputPath).metadata()
+  let metadata: sharp.Metadata
+  try {
+    metadata = await sharp(inputPath).metadata()
+  } catch {
+    throw new AppError(ERROR_CODES.IMAGE_METADATA_READ_FAILED, filename)
+  }
   if (!metadata.width || !metadata.height) {
-    throw new Error(`이미지 메타데이터를 읽을 수 없습니다: ${path.basename(inputPath)}`)
+    throw new AppError(ERROR_CODES.IMAGE_METADATA_READ_FAILED, filename)
   }
   const originalWidth = metadata.width
   const originalHeight = metadata.height
-  const originalStat = await fs.stat(inputPath)
 
-  let { width, height, options: resizeOpts } = resolveResizeOptions(
-    resizeMode,
-    preset,
-    originalWidth,
-    originalHeight
-  )
+  let originalStat: Awaited<ReturnType<typeof fs.stat>>
+  try {
+    originalStat = await fs.stat(inputPath)
+  } catch {
+    throw new AppError(ERROR_CODES.IMAGE_METADATA_READ_FAILED, filename)
+  }
+
+  let width: number | null
+  let height: number | null
+  let resizeOpts: sharp.ResizeOptions
+  try {
+    ;({ width, height, options: resizeOpts } = resolveResizeOptions(resizeMode, preset, originalWidth, originalHeight))
+  } catch (err) {
+    if (err instanceof AppError) throw err
+    throw new AppError(ERROR_CODES.IMAGE_PROCESS_FAILED, filename)
+  }
 
   const needsFrame = frameStyle !== 'none'
   let exifData = null
@@ -303,7 +319,12 @@ const processImage = async (options: ProcessImageOptionsType): Promise<Processed
 
   let frameBorderWidth: number | undefined
   ;({ width, height, resizeOpts, frameBorderWidth } = adjustForFrame(
-    width, height, resizeOpts, originalWidth, originalHeight, willApplyFrame
+    width,
+    height,
+    resizeOpts,
+    originalWidth,
+    originalHeight,
+    willApplyFrame
   ))
 
   let pipeline = sharp(inputPath, { sequentialRead: true })
@@ -318,42 +339,58 @@ const processImage = async (options: ProcessImageOptionsType): Promise<Processed
     )
 
   if (willApplyFrame) {
-    const resizedBuffer = await pipeline.toBuffer()
+    let resizedBuffer: Buffer
+    try {
+      resizedBuffer = await pipeline.toBuffer()
+    } catch {
+      throw new AppError(ERROR_CODES.IMAGE_RESIZE_FAILED, filename)
+    }
+
     const framedBuffer = await applyFrame(resizedBuffer, exifData!, frameBorderWidth)
 
-    let outputPipeline = sharp(framedBuffer)
-    if (output.format === 'jpeg') {
-      outputPipeline = outputPipeline.jpeg({ quality: output.quality, mozjpeg: true })
-    } else {
-      outputPipeline = outputPipeline.webp({ quality: output.quality, effort: 4, smartSubsample: true })
-    }
-    const info = await outputPipeline.toFile(outputPath)
-    const processedStat = await fs.stat(outputPath)
+    try {
+      let outputPipeline = sharp(framedBuffer)
+      if (output.format === 'jpeg') {
+        outputPipeline = outputPipeline.jpeg({ quality: output.quality, mozjpeg: true })
+      } else {
+        outputPipeline = outputPipeline.webp({ quality: output.quality, effort: 4, smartSubsample: true })
+      }
+      const info = await outputPipeline.toFile(outputPath)
+      const processedStat = await fs.stat(outputPath)
 
-    return {
-      inputPath,
-      outputPath,
-      originalSize: originalStat.size,
-      processedSize: processedStat.size,
-      width: info.width,
-      height: info.height
+      return {
+        inputPath,
+        outputPath,
+        originalSize: originalStat.size,
+        processedSize: processedStat.size,
+        width: info.width,
+        height: info.height
+      }
+    } catch (err) {
+      if (err instanceof AppError) throw err
+      throw new AppError(ERROR_CODES.IMAGE_SAVE_FAILED, filename)
     }
   } else {
-    if (output.format === 'jpeg') {
-      pipeline = pipeline.jpeg({ quality: output.quality, mozjpeg: true })
-    } else {
-      pipeline = pipeline.webp({ quality: output.quality, effort: 4, smartSubsample: true })
-    }
-    const info = await pipeline.toFile(outputPath)
-    const processedStat = await fs.stat(outputPath)
+    try {
+      if (output.format === 'jpeg') {
+        pipeline = pipeline.jpeg({ quality: output.quality, mozjpeg: true })
+      } else {
+        pipeline = pipeline.webp({ quality: output.quality, effort: 4, smartSubsample: true })
+      }
+      const info = await pipeline.toFile(outputPath)
+      const processedStat = await fs.stat(outputPath)
 
-    return {
-      inputPath,
-      outputPath,
-      originalSize: originalStat.size,
-      processedSize: processedStat.size,
-      width: info.width,
-      height: info.height
+      return {
+        inputPath,
+        outputPath,
+        originalSize: originalStat.size,
+        processedSize: processedStat.size,
+        width: info.width,
+        height: info.height
+      }
+    } catch (err) {
+      if (err instanceof AppError) throw err
+      throw new AppError(ERROR_CODES.IMAGE_ENCODE_FAILED, filename)
     }
   }
 }
@@ -368,11 +405,7 @@ export const processBatch = async (
   const errors: { inputPath: string; error: string }[] = []
   let completedCount = 0
 
-  const outputPathMap = await buildOutputPathMap(
-    options.images,
-    options.outputDir,
-    options.output.format
-  )
+  const outputPathMap = await buildOutputPathMap(options.images, options.outputDir, options.output.format)
 
   const semaphore = new Array(concurrency).fill(Promise.resolve())
   let semaphoreIndex = 0
@@ -450,80 +483,85 @@ export const generatePreview = async (
   quality: number,
   frameStyle: FrameStyleType
 ): Promise<{ dataUrl: string; width: number; height: number; estimatedSize: number }> => {
-  const metadata = await sharp(imagePath).metadata()
-  if (!metadata.width || !metadata.height) {
-    throw new Error(`이미지 메타데이터를 읽을 수 없습니다: ${path.basename(imagePath)}`)
-  }
-  const originalWidth = metadata.width
-  const originalHeight = metadata.height
-
-  let { width, height, options: resizeOpts } = resolveResizeOptions(
-    resizeMode,
-    preset,
-    originalWidth,
-    originalHeight
-  )
-
-  const needsFrame = frameStyle !== 'none'
-  let exifData = null
-  if (needsFrame) {
-    exifData = await readExif(imagePath)
-  }
-  const willApplyFrame = needsFrame && exifData != null && hasExifForFrame(exifData)
-
-  if (willApplyFrame && resizeMode.kind === 'aspect-ratio' && width != null && height == null) {
-    const bw = Math.max(8, Math.round(width * 0.015))
-    const iw = width - 2 * bw
-    const estImageHeight = Math.round(iw * (originalHeight / originalWidth))
-    const { frameHeight } = calcFrameDimensions(iw)
-    if (estImageHeight + 2 * bw + frameHeight > width) {
-      height = width
-      width = null
+  try {
+    const metadata = await sharp(imagePath).metadata()
+    if (!metadata.width || !metadata.height) {
+      throw new AppError(ERROR_CODES.IMAGE_METADATA_READ_FAILED, path.basename(imagePath))
     }
-  }
+    const originalWidth = metadata.width
+    const originalHeight = metadata.height
 
-  let frameBorderWidth: number | undefined
-  ;({ width, height, resizeOpts, frameBorderWidth } = adjustForFrame(
-    width, height, resizeOpts, originalWidth, originalHeight, willApplyFrame
-  ))
+    let { width, height, options: resizeOpts } = resolveResizeOptions(resizeMode, preset, originalWidth, originalHeight)
 
-  let pipeline = sharp(imagePath, { sequentialRead: true })
-  pipeline = pipeline.rotate()
-  pipeline = pipeline.resize(width, height, resizeOpts)
+    const needsFrame = frameStyle !== 'none'
+    let exifData = null
+    if (needsFrame) {
+      exifData = await readExif(imagePath)
+    }
+    const willApplyFrame = needsFrame && exifData != null && hasExifForFrame(exifData)
 
-  let resultBuffer: Buffer
-  if (willApplyFrame) {
-    const resizedBuffer = await pipeline.toBuffer()
-    resultBuffer = await applyFrame(resizedBuffer, exifData!, frameBorderWidth)
-  } else {
-    resultBuffer = await pipeline.toBuffer()
-  }
+    if (willApplyFrame && resizeMode.kind === 'aspect-ratio' && width != null && height == null) {
+      const bw = Math.max(8, Math.round(width * 0.015))
+      const iw = width - 2 * bw
+      const estImageHeight = Math.round(iw * (originalHeight / originalWidth))
+      const { frameHeight } = calcFrameDimensions(iw)
+      if (estImageHeight + 2 * bw + frameHeight > width) {
+        height = width
+        width = null
+      }
+    }
 
-  let outputPipeline = sharp(resultBuffer)
-  if (outputFormat === 'jpeg') {
-    outputPipeline = outputPipeline.jpeg({ quality, mozjpeg: true })
-  } else {
-    outputPipeline = outputPipeline.webp({ quality, effort: 4 })
-  }
+    let frameBorderWidth: number | undefined
+    ;({ width, height, resizeOpts, frameBorderWidth } = adjustForFrame(
+      width,
+      height,
+      resizeOpts,
+      originalWidth,
+      originalHeight,
+      willApplyFrame
+    ))
 
-  const outputBuffer = await outputPipeline.toBuffer()
-  const outputMeta = await sharp(outputBuffer).metadata()
+    let pipeline = sharp(imagePath, { sequentialRead: true })
+    pipeline = pipeline.rotate()
+    pipeline = pipeline.resize(width, height, resizeOpts)
 
-  const mimeType = outputFormat === 'jpeg' ? 'image/jpeg' : 'image/webp'
-  const dataUrl = `data:${mimeType};base64,${outputBuffer.toString('base64')}`
+    let resultBuffer: Buffer
+    if (willApplyFrame) {
+      const resizedBuffer = await pipeline.toBuffer()
+      resultBuffer = await applyFrame(resizedBuffer, exifData!, frameBorderWidth)
+    } else {
+      resultBuffer = await pipeline.toBuffer()
+    }
 
-  return {
-    dataUrl,
-    width: outputMeta.width!,
-    height: outputMeta.height!,
-    estimatedSize: outputBuffer.length
+    let outputPipeline = sharp(resultBuffer)
+    if (outputFormat === 'jpeg') {
+      outputPipeline = outputPipeline.jpeg({ quality, mozjpeg: true })
+    } else {
+      outputPipeline = outputPipeline.webp({ quality, effort: 4 })
+    }
+
+    const outputBuffer = await outputPipeline.toBuffer()
+    const outputMeta = await sharp(outputBuffer).metadata()
+
+    const mimeType = outputFormat === 'jpeg' ? 'image/jpeg' : 'image/webp'
+    const dataUrl = `data:${mimeType};base64,${outputBuffer.toString('base64')}`
+
+    return {
+      dataUrl,
+      width: outputMeta.width!,
+      height: outputMeta.height!,
+      estimatedSize: outputBuffer.length
+    }
+  } catch (err) {
+    if (err instanceof AppError) throw err
+    throw new AppError(ERROR_CODES.IMAGE_PREVIEW_FAILED, path.basename(imagePath))
   }
 }
 
 export const loadImageMetadata = async (filePath: string) => {
   const metadata = await sharp(filePath).metadata()
   if (!metadata.width || !metadata.height) {
-    throw new Error(`이미지 메타데이터를 읽을 수 없습니다: ${path.basename(filePath)}`)
+    throw new AppError(ERROR_CODES.IMAGE_METADATA_READ_FAILED, path.basename(filePath))
   }
   const stat = await fs.stat(filePath)
   const exifData = await readExif(filePath)

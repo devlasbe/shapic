@@ -2,6 +2,8 @@ import { useCallback } from 'react'
 import { useAppStore } from '../stores/app-store'
 import { selectSelectedImage, selectHasImages, selectIsAllDone } from '../stores/selectors'
 import { useProcessing } from '../hooks/use-processing'
+import { showErrorToast, parseIpcError } from '../utils/toast'
+import { ERROR_CODES, ERROR_MESSAGES } from '../../../shared/errors'
 import PresetSelector from './preset-selector'
 import PillButton from './ui/pill-button'
 import Slider from './ui/slider'
@@ -20,8 +22,13 @@ const Settings = () => {
   const { startSingleProcessing, startBatchProcessing, processingModeRef } = useProcessing()
 
   const handleSelectFolder = useCallback(async () => {
-    const folder = await window.api.dialog.openFolder()
-    if (folder) setOption('outputFolder', folder)
+    try {
+      const folder = await window.api.dialog.openFolder()
+      if (folder) setOption('outputFolder', folder)
+    } catch (err) {
+      const message = parseIpcError(err, ERROR_MESSAGES[ERROR_CODES.DIALOG_OPEN_FOLDER_FAILED])
+      showErrorToast(message)
+    }
   }, [setOption])
 
   const hasExif = selectedImage?.exifData != null
@@ -48,7 +55,7 @@ const Settings = () => {
                 active={options.resizeMode.kind === 'preset-fit'}
                 onClick={() => setResizeMode({ kind: 'preset-fit', fit: 'cover' })}
               >
-                프리셋 맞춤
+                맞춤
               </PillButton>
               <PillButton
                 active={options.resizeMode.kind === 'aspect-ratio'}
@@ -82,16 +89,10 @@ const Settings = () => {
           <div className="flex flex-col gap-2.5">
             <label className="text-xs font-medium text-text-secondary">출력 포맷</label>
             <div className="flex gap-1.5">
-              <PillButton
-                active={options.outputFormat === 'jpeg'}
-                onClick={() => setOption('outputFormat', 'jpeg')}
-              >
+              <PillButton active={options.outputFormat === 'jpeg'} onClick={() => setOption('outputFormat', 'jpeg')}>
                 JPEG
               </PillButton>
-              <PillButton
-                active={options.outputFormat === 'webp'}
-                onClick={() => setOption('outputFormat', 'webp')}
-              >
+              <PillButton active={options.outputFormat === 'webp'} onClick={() => setOption('outputFormat', 'webp')}>
                 WebP
               </PillButton>
             </div>
@@ -100,13 +101,7 @@ const Settings = () => {
           <div className="border-t border-border-light" />
 
           {/* 품질 슬라이더 */}
-          <Slider
-            label="품질"
-            value={options.quality}
-            min={1}
-            max={100}
-            onChange={(v) => setOption('quality', v)}
-          />
+          <Slider label="품질" value={options.quality} min={1} max={100} onChange={(v) => setOption('quality', v)} />
         </div>
 
         {/* 카드 3: 부가 설정 */}
@@ -136,28 +131,26 @@ const Settings = () => {
               className="w-full flex items-center gap-2 px-2.5 py-1.5 text-sm bg-background border border-border rounded-lg hover:border-primary/30 transition-colors cursor-pointer text-left"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-text-muted shrink-0">
-                <path d="M1.5 3.5V11C1.5 11.5523 1.94772 12 2.5 12H11.5C12.0523 12 12.5 11.5523 12.5 11V5.5C12.5 4.94772 12.0523 4.5 11.5 4.5H7L5.5 2.5H2.5C1.94772 2.5 1.5 2.94772 1.5 3.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="M1.5 3.5V11C1.5 11.5523 1.94772 12 2.5 12H11.5C12.0523 12 12.5 11.5523 12.5 11V5.5C12.5 4.94772 12.0523 4.5 11.5 4.5H7L5.5 2.5H2.5C1.94772 2.5 1.5 2.94772 1.5 3.5Z"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
               <span className={options.outputFolder ? 'text-text-primary truncate' : 'text-text-muted'}>
-                {options.outputFolder
-                  ? options.outputFolder.split(/[/\\]/).pop()
-                  : '폴더 선택...'}
+                {options.outputFolder ? options.outputFolder.split(/[/\\]/).pop() : '폴더 선택...'}
               </span>
             </button>
-            {options.outputFolder && (
-              <p className="text-[10px] text-text-muted truncate">{options.outputFolder}</p>
-            )}
+            {options.outputFolder && <p className="text-[10px] text-text-muted truncate">{options.outputFolder}</p>}
           </div>
         </div>
       </div>
 
       {/* 변환 버튼 */}
       <div className="p-3.5 border-t border-border-light flex flex-col gap-2.5">
-        <Button
-          className="w-full"
-          disabled={!canSingle}
-          onClick={startSingleProcessing}
-        >
+        <Button className="w-full" disabled={!canSingle} onClick={startSingleProcessing}>
           {progress.isProcessing && processingModeRef.current === 'single' ? (
             <span className="flex items-center gap-2">
               <div className="w-3.5 h-3.5 rounded-full border-[1.5px] border-white border-t-transparent animate-spin" />
@@ -167,12 +160,7 @@ const Settings = () => {
             '개별 변환'
           )}
         </Button>
-        <Button
-          className="w-full"
-          variant="secondary"
-          disabled={!canBatch}
-          onClick={startBatchProcessing}
-        >
+        <Button className="w-full" variant="secondary" disabled={!canBatch} onClick={startBatchProcessing}>
           {progress.isProcessing && processingModeRef.current === 'batch' ? (
             <span className="flex items-center gap-2">
               <div className="w-3.5 h-3.5 rounded-full border-[1.5px] border-border border-t-transparent animate-spin" />

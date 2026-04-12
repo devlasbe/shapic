@@ -1,5 +1,7 @@
 import { useEffect, useCallback, useRef } from 'react'
 import { useAppStore } from '../stores/app-store.js'
+import { showErrorToast, parseIpcError } from '../utils/toast.js'
+import { ERROR_CODES, ERROR_MESSAGES } from '../../../shared/errors.js'
 import type { ProcessingProgressType, BatchResultType } from '../types/index.js'
 
 export type ProcessingModeType = 'single' | 'batch' | null
@@ -23,10 +25,7 @@ export const useProcessing = () => {
   useEffect(() => {
     const unsubProgress = window.api.image.onProgress((raw) => {
       const progress = raw as ProcessingProgressType
-      const percent =
-        progress.totalCount > 0
-          ? Math.round((progress.completedCount / progress.totalCount) * 100)
-          : 0
+      const percent = progress.totalCount > 0 ? Math.round((progress.completedCount / progress.totalCount) * 100) : 0
 
       setProgress({
         isProcessing: true,
@@ -61,6 +60,26 @@ export const useProcessing = () => {
         }
       })
 
+      // 에러 메시지별 그룹핑 후 토스트
+      if (result.errors.length > 0) {
+        const errorGroups = new Map<string, number>()
+        for (const e of result.errors) {
+          const baseMessage = e.error.includes(': ') ? e.error.split(': ')[0] : e.error
+          errorGroups.set(baseMessage, (errorGroups.get(baseMessage) ?? 0) + 1)
+        }
+        for (const [message, count] of errorGroups) {
+          if (count > 1) {
+            showErrorToast(`${message} (${count}장)`)
+          } else {
+            const original = result.errors.find((e) => {
+              const base = e.error.includes(': ') ? e.error.split(': ')[0] : e.error
+              return base === message
+            })!
+            showErrorToast(original.error)
+          }
+        }
+      }
+
       setProgress({ isProcessing: false, overallPercent: 100 })
       processingModeRef.current = null
     })
@@ -85,14 +104,21 @@ export const useProcessing = () => {
 
       imagesToProcess.forEach((img) => updateImageStatus(img.id, 'processing'))
 
-      await window.api.image.process({
-        images: imagesToProcess.map((img) => ({ id: img.id, path: img.path, name: img.name })),
-        outputDir: options.outputFolder,
-        presetId: options.presetId,
-        resizeMode: options.resizeMode,
-        output: { format: options.outputFormat, quality: options.quality },
-        frame: options.frameStyle
-      })
+      try {
+        await window.api.image.process({
+          images: imagesToProcess.map((img) => ({ id: img.id, path: img.path, name: img.name })),
+          outputDir: options.outputFolder,
+          presetId: options.presetId,
+          resizeMode: options.resizeMode,
+          output: { format: options.outputFormat, quality: options.quality },
+          frame: options.frameStyle
+        })
+      } catch (err) {
+        const message = parseIpcError(err, ERROR_MESSAGES[ERROR_CODES.IMAGE_PROCESS_FAILED])
+        showErrorToast(message)
+        setProgress({ isProcessing: false, overallPercent: 0 })
+        imagesToProcess.forEach((img) => updateImageStatus(img.id, 'error'))
+      }
     },
     [options, setProgress, updateImageStatus]
   )
