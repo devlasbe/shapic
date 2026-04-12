@@ -1,7 +1,13 @@
+import { useEffect, useState } from 'react'
 import { useAppStore } from '../stores/app-store'
 
 const ProgressBar = () => {
   const progress = useAppStore((s) => s.progress)
+  const [version, setVersion] = useState('')
+
+  useEffect(() => {
+    window.api.app.getVersion().then(setVersion)
+  }, [])
 
   return (
     <div className="flex items-center h-9 px-4 bg-card border-t border-border gap-3">
@@ -29,6 +35,9 @@ const ProgressBar = () => {
         </div>
       ) : (
         <span className="text-[11px] text-text-muted">Ready</span>
+      )}
+      {version && (
+        <span className="ml-auto text-[11px] text-text-muted">v{version}</span>
       )}
     </div>
   )
