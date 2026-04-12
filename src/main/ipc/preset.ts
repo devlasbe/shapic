@@ -5,10 +5,16 @@ import {
   updateCustomPreset,
   deleteCustomPreset
 } from '../services/preset-store.js'
+import { AppError, ERROR_CODES } from '../../shared/errors.js'
 
 export const registerPresetHandlers = () => {
   ipcMain.handle('preset:list', async () => {
-    return getCustomPresets()
+    try {
+      return getCustomPresets()
+    } catch (err) {
+      if (err instanceof AppError) throw err
+      throw new AppError(ERROR_CODES.PRESET_LIST_FAILED)
+    }
   })
 
   ipcMain.handle('preset:save', async (_event, preset: {
@@ -20,14 +26,29 @@ export const registerPresetHandlers = () => {
     quality: number
     description: string
   }) => {
-    return saveCustomPreset(preset)
+    try {
+      return saveCustomPreset(preset)
+    } catch (err) {
+      if (err instanceof AppError) throw err
+      throw new AppError(ERROR_CODES.PRESET_SAVE_FAILED)
+    }
   })
 
   ipcMain.handle('preset:update', async (_event, id: string, input: Record<string, unknown>) => {
-    return updateCustomPreset(id, input)
+    try {
+      return updateCustomPreset(id, input)
+    } catch (err) {
+      if (err instanceof AppError) throw err
+      throw new AppError(ERROR_CODES.PRESET_SAVE_FAILED)
+    }
   })
 
   ipcMain.handle('preset:delete', async (_event, id: string) => {
-    deleteCustomPreset(id)
+    try {
+      deleteCustomPreset(id)
+    } catch (err) {
+      if (err instanceof AppError) throw err
+      throw new AppError(ERROR_CODES.PRESET_DELETE_FAILED)
+    }
   })
 }

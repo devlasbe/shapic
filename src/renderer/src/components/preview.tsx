@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAppStore } from '../stores/app-store'
 import { selectSelectedImage } from '../stores/selectors'
 import { formatFileSize, formatCompressionRatio } from '../utils/format'
+import { parseIpcError } from '../utils/toast'
+import { ERROR_CODES, ERROR_MESSAGES } from '../../../shared/errors'
 import DropZone from './drop-zone'
 
 const PREVIEW_DEBOUNCE_MS = 300
@@ -38,7 +40,7 @@ const Preview = () => {
         updateImagePreview(selectedImage.id, result.dataUrl)
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : '미리보기 생성에 실패했습니다'
+      const message = parseIpcError(err, ERROR_MESSAGES[ERROR_CODES.IMAGE_PREVIEW_FAILED])
       setImageError(message)
     } finally {
       setLoading(false)

@@ -1,15 +1,22 @@
 import { useCallback } from 'react'
 import { useAppStore } from '../stores/app-store'
 import { processFiles } from '../utils/process-files'
+import { showErrorToast, parseIpcError } from '../utils/toast'
+import { ERROR_CODES, ERROR_MESSAGES } from '../../../shared/errors'
 
 const DropZone = () => {
   const addImages = useAppStore((s) => s.addImages)
 
   const handleClickAdd = useCallback(async () => {
-    const paths = await window.api.dialog.openFile()
-    if (!paths) return
-    const imageFiles = await processFiles(paths)
-    if (imageFiles.length > 0) addImages(imageFiles)
+    try {
+      const paths = await window.api.dialog.openFile()
+      if (!paths) return
+      const imageFiles = await processFiles(paths)
+      if (imageFiles.length > 0) addImages(imageFiles)
+    } catch (err) {
+      const message = parseIpcError(err, ERROR_MESSAGES[ERROR_CODES.DIALOG_OPEN_FILE_FAILED])
+      showErrorToast(message)
+    }
   }, [addImages])
 
   return (
@@ -37,9 +44,7 @@ const DropZone = () => {
       </div>
       <div className="text-center">
         <p className="text-xs font-medium text-text-primary">이미지 추가</p>
-        <p className="text-[10px] text-text-muted mt-0.5">
-          드래그 & 드롭 또는 클릭
-        </p>
+        <p className="text-[10px] text-text-muted mt-0.5">드래그 & 드롭 또는 클릭</p>
       </div>
     </div>
   )

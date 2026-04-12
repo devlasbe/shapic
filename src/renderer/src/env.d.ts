@@ -12,6 +12,9 @@ import type {
 } from './types'
 
 type ShapicApiType = {
+  app: {
+    getVersion: () => Promise<string>
+  }
   image: {
     load: (filePaths: string[]) => Promise<LoadedImageType[]>
     process: (options: BatchProcessOptionsType) => Promise<void>
@@ -27,6 +30,9 @@ type ShapicApiType = {
   dialog: {
     openFile: () => Promise<string[] | null>
     openFolder: () => Promise<string | null>
+  }
+  file: {
+    getPathForFile: (file: File) => string
   }
 }
 

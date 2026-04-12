@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useAppStore } from '../stores/app-store'
+import { showErrorToast, parseIpcError } from '../utils/toast'
+import { ERROR_CODES, ERROR_MESSAGES } from '../../../shared/errors'
 import Modal from './ui/modal'
 import Button from './ui/button'
 import type { PresetCategoryType, OutputFormatType } from '../types'
@@ -29,20 +31,25 @@ const PresetModal = ({ onClose }: PresetModalPropsType) => {
   const handleSave = async () => {
     if (!isValid) return
 
-    const saved = await window.api.preset.save({
-      name: name.trim(),
-      category,
-      width,
-      height,
-      format,
-      quality,
-      description: `${width}x${height}`
-    })
+    try {
+      const saved = await window.api.preset.save({
+        name: name.trim(),
+        category,
+        width,
+        height,
+        format,
+        quality,
+        description: `${width}x${height}`
+      })
 
-    if (saved) {
-      addCustomPreset(saved)
+      if (saved) {
+        addCustomPreset(saved)
+      }
+      onClose()
+    } catch (err) {
+      const message = parseIpcError(err, ERROR_MESSAGES[ERROR_CODES.PRESET_SAVE_FAILED])
+      showErrorToast(message)
     }
-    onClose()
   }
 
   return (
@@ -129,9 +136,7 @@ const PresetModal = ({ onClose }: PresetModalPropsType) => {
               max={100}
               className="w-full mt-1.5 px-2.5 py-1.5 text-sm bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
-            {!isValidQuality(quality) && (
-              <p className="mt-1 text-xs text-red-500">1~100 사이 값을 입력해 주세요</p>
-            )}
+            {!isValidQuality(quality) && <p className="mt-1 text-xs text-red-500">1~100 사이 값을 입력해 주세요</p>}
           </div>
         </div>
 

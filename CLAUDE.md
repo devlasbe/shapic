@@ -66,3 +66,15 @@ UI 텍스트, 커밋 메시지, 문서 모두 한글로 작성.
 ## 크로스 플랫폼
 
 macOS와 Windows 양쪽 모두 지원하는 앱이므로, 기능 추가/수정 시 반드시 두 플랫폼을 고려할 것. 파일 경로 구분자(`/` vs `\`), 네이티브 메뉴, 타이틀바, 다이얼로그 동작 등 OS별 차이에 주의.
+
+## 에러 처리 규칙
+
+모든 에러는 `src/shared/errors.ts`에서 코드-메시지 쌍으로 관리. 새 에러 추가 시 반드시 다음을 따를 것:
+
+1. `ERROR_CODES`에 `{도메인}_{대상}_{동사_과거형}` 형식으로 코드 추가
+2. `ERROR_MESSAGES`에 한글 메시지 추가
+3. Main 프로세스에서는 `new AppError(ERROR_CODES.XXX, context?)` 사용
+4. Renderer에서 IPC 호출 시 반드시 try-catch로 감싸고, 사용자 피드백이 필요한 경우 `showErrorToast(message)` 호출
+5. `docs/error-codes.md`에 새 에러 코드 문서화
+
+에러 메시지는 반드시 한글로 작성. 영어 에러 메시지 금지. 에러 코드 자체(상수명)만 영어.

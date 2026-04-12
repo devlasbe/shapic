@@ -1,5 +1,6 @@
 import Store from 'electron-store'
 import crypto from 'node:crypto'
+import { AppError, ERROR_CODES } from '../../shared/errors.js'
 
 type PresetType = {
   id: string
@@ -42,7 +43,7 @@ export const saveCustomPreset = (input: Omit<PresetType, 'id' | 'isCustom'>): Pr
 export const updateCustomPreset = (id: string, input: Partial<Omit<PresetType, 'id' | 'isCustom'>>): PresetType => {
   const current = store.get('customPresets')
   const index = current.findIndex((p) => p.id === id)
-  if (index === -1) throw new Error(`Preset not found: ${id}`)
+  if (index === -1) throw new AppError(ERROR_CODES.PRESET_LOOKUP_FAILED, id)
 
   const updated = { ...current[index], ...input }
   const newList = [...current]
@@ -54,6 +55,9 @@ export const updateCustomPreset = (id: string, input: Partial<Omit<PresetType, '
 export const deleteCustomPreset = (id: string): void => {
   const current = store.get('customPresets')
   const target = current.find((p) => p.id === id)
-  if (!target) throw new Error(`Preset not found: ${id}`)
-  store.set('customPresets', current.filter((p) => p.id !== id))
+  if (!target) throw new AppError(ERROR_CODES.PRESET_LOOKUP_FAILED, id)
+  store.set(
+    'customPresets',
+    current.filter((p) => p.id !== id)
+  )
 }
