@@ -61,10 +61,14 @@ export const useAppStore = create<AppStateType>((set) => ({
   customPresets: [],
 
   addImages: (files) =>
-    set((state) => ({
-      images: [...state.images, ...files],
-      selectedImageId: files[files.length - 1]?.id ?? state.selectedImageId
-    })),
+    set((state) => {
+      const existingPaths = new Set(state.images.map((img) => img.path))
+      const newFiles = files.filter((f) => !existingPaths.has(f.path))
+      return {
+        images: [...state.images, ...newFiles],
+        selectedImageId: newFiles[newFiles.length - 1]?.id ?? state.selectedImageId
+      }
+    }),
 
   removeImage: (id) =>
     set((state) => {
