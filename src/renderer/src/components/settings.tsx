@@ -48,7 +48,7 @@ const Settings = () => {
                 active={options.resizeMode.kind === 'preset-fit'}
                 onClick={() => setResizeMode({ kind: 'preset-fit', fit: 'cover' })}
               >
-                프리셋 맞춤
+                맞춤
               </PillButton>
               <PillButton
                 active={options.resizeMode.kind === 'aspect-ratio'}
