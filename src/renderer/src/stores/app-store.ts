@@ -63,7 +63,7 @@ export const useAppStore = create<AppStateType>((set) => ({
   addImages: (files) =>
     set((state) => ({
       images: [...state.images, ...files],
-      selectedImageId: state.selectedImageId ?? files[0]?.id ?? null
+      selectedImageId: files[files.length - 1]?.id ?? state.selectedImageId
     })),
 
   removeImage: (id) =>
