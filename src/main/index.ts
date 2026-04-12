@@ -45,7 +45,7 @@ const createWindow = () => {
 app.whenReady().then(() => {
   // file:// 프로토콜로 로컬 이미지 접근 허용
   protocol.handle("local-file", (request) => {
-    const filePath = decodeURIComponent(request.url.replace("local-file://", ""));
+    const filePath = decodeURIComponent(new URL(request.url).pathname);
     return net.fetch(pathToFileURL(filePath).href);
   });
 

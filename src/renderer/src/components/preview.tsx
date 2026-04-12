@@ -117,7 +117,7 @@ const Preview = () => {
             src={
               previewData?.dataUrl ??
               selectedImage.previewDataUrl ??
-              `local-file://${selectedImage.path}`
+              `local-file:///${selectedImage.path.replace(/\\/g, '/').replace(/^\//, '')}`
             }
             alt={selectedImage.name}
             className="max-w-full max-h-full object-contain rounded-md shadow-lg shadow-black/10"
