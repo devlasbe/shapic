@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, webUtils } from 'electron'
 
 contextBridge.exposeInMainWorld('api', {
   image: {
@@ -24,5 +24,8 @@ contextBridge.exposeInMainWorld('api', {
   dialog: {
     openFile: () => ipcRenderer.invoke('dialog:openFile'),
     openFolder: () => ipcRenderer.invoke('dialog:openFolder')
+  },
+  file: {
+    getPathForFile: (file: File) => webUtils.getPathForFile(file)
   }
 })

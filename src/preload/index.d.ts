@@ -26,6 +26,9 @@ export type ShapicApiType = {
     openFile: () => Promise<string[] | null>
     openFolder: () => Promise<string | null>
   }
+  file: {
+    getPathForFile: (file: File) => string
+  }
 }
 
 declare global {

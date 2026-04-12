@@ -1,5 +1,6 @@
 import { app, BrowserWindow, shell, protocol, net, Menu, nativeImage } from "electron";
 import { join } from "path";
+import { pathToFileURL } from "node:url";
 import { registerAllIpcHandlers } from "./ipc/index.js";
 
 app.name = "Shapic";
@@ -45,7 +46,7 @@ app.whenReady().then(() => {
   // file:// 프로토콜로 로컬 이미지 접근 허용
   protocol.handle("local-file", (request) => {
     const filePath = decodeURIComponent(request.url.replace("local-file://", ""));
-    return net.fetch(`file://${filePath}`);
+    return net.fetch(pathToFileURL(filePath).href);
   });
 
   // 앱 아이콘 경로
