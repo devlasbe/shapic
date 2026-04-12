@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { useAppStore } from '../stores/app-store'
 import { cn } from '../utils/cn'
 import { formatFileSize } from '../utils/format'
+import { processFiles } from '../utils/process-files'
 import DropZone from './drop-zone'
 import type { ImageFileType } from '../types'
 
@@ -68,17 +69,8 @@ const ImageList = () => {
   const handleClickAdd = useCallback(async () => {
     const paths = await window.api.dialog.openFile()
     if (!paths) return
-    const loaded = await window.api.image.load(paths)
-    const imageFiles = loaded.map((info) => ({
-      ...info,
-      id: crypto.randomUUID(),
-      status: 'idle' as const,
-      previewDataUrl: null,
-      outputSize: null,
-      outputPath: null,
-      errorMessage: null
-    }))
-    useAppStore.getState().addImages(imageFiles)
+    const imageFiles = await processFiles(paths)
+    if (imageFiles.length > 0) useAppStore.getState().addImages(imageFiles)
   }, [])
 
   if (images.length === 0) {
