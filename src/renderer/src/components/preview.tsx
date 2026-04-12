@@ -34,6 +34,7 @@ const Preview = () => {
       })
       if (result) {
         setPreviewData(result)
+        setImageError(null)
         updateImagePreview(selectedImage.id, result.dataUrl)
       }
     } catch (err) {

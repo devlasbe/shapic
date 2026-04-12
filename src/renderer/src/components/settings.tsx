@@ -140,7 +140,7 @@ const Settings = () => {
               </svg>
               <span className={options.outputFolder ? 'text-text-primary truncate' : 'text-text-muted'}>
                 {options.outputFolder
-                  ? options.outputFolder.split('/').pop()
+                  ? options.outputFolder.split(/[/\\]/).pop()
                   : '폴더 선택...'}
               </span>
             </button>
