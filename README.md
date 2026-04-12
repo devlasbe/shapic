@@ -3,13 +3,17 @@
   Shapic
 </h1>
 
+![Shapic 스크린샷](https://github.com/user-attachments/assets/d5e47772-d508-4124-a7f9-35af62e4e046)
+
 SNS 플랫폼에 최적화된 이미지 리사이즈 & 최적화 데스크톱 앱
 
-## 왜 만들었나
+## 다운로드
 
-고화소 사진을 Instagram 등 SNS에 그대로 올리면 플랫폼의 자동 압축과 리사이즈로 화질이 뭉개집니다. 업로드 전에 플랫폼 규격에 맞게 직접 리사이즈하면 화질 저하를 최소화할 수 있지만, 이를 위해 매번 Photoshop 같은 무거운 도구를 실행하는 건 비효율적입니다. Shapic은 드래그 앤 드롭만으로 SNS 최적화 리사이즈를 완료할 수 있도록 설계된 경량 데스크톱 앱입니다.
-
-![Shapic 스크린샷](https://github.com/user-attachments/assets/d5e47772-d508-4124-a7f9-35af62e4e046)
+| 플랫폼                | 다운로드                                                                                   |
+| --------------------- | ------------------------------------------------------------------------------------------ |
+| macOS (Apple Silicon) | [다운로드](https://github.com/devlasbe/shapic/releases/latest/download/Shapic-arm64.dmg)   |
+| macOS (Intel)         | [다운로드](https://github.com/devlasbe/shapic/releases/latest/download/Shapic-x64.dmg)     |
+| Windows               | [다운로드](https://github.com/devlasbe/shapic/releases/latest/download/Shapic-Windows.zip) |
 
 ## 주요 기능
 
@@ -21,14 +25,6 @@ SNS 플랫폼에 최적화된 이미지 리사이즈 & 최적화 데스크톱 �
 - **실시간 미리보기** — 설정 변경 시 결과물 즉시 확인, 압축률 표시
 - **포맷 변환** — JPEG(mozjpeg) / WebP 출력, 품질 조절 가능
 - **다양한 입력 포맷** — JPG, PNG, WebP, HEIF, HEIC, TIFF 지원
-
-## 다운로드
-
-| 플랫폼                | 다운로드                                                       |
-| --------------------- | -------------------------------------------------------------- |
-| macOS (Apple Silicon) | [다운로드](https://github.com/devlasbe/shapic/releases/latest/download/Shapic-arm64.dmg) |
-| macOS (Intel)         | [다운로드](https://github.com/devlasbe/shapic/releases/latest/download/Shapic-x64.dmg) |
-| Windows               | [다운로드](https://github.com/devlasbe/shapic/releases/latest/download/Shapic-Windows.zip) |
 
 ## macOS 설치 안내
 
