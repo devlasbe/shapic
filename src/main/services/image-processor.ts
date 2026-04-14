@@ -492,35 +492,56 @@ const generatePreview = async (
     const originalWidth = metadata.width
     const originalHeight = metadata.height
 
-    let { width, height, options: resizeOpts } = resolveResizeOptions(resizeMode, preset, originalWidth, originalHeight)
-
-    const needsFrame = frameStyle !== 'none'
+    const PREVIEW_MAX_PX = 1920
+    let width: number | null
+    let height: number | null
+    let resizeOpts: sharp.ResizeOptions
+    let willApplyFrame = false
     let exifData = null
-    if (needsFrame) {
-      exifData = await readExif(imagePath)
-    }
-    const willApplyFrame = needsFrame && exifData != null && FrameRenderer.hasExif(exifData)
-
-    if (willApplyFrame && resizeMode.kind === 'aspect-ratio' && width != null && height == null) {
-      const bw = Math.max(8, Math.round(width * 0.015))
-      const iw = width - 2 * bw
-      const estImageHeight = Math.round(iw * (originalHeight / originalWidth))
-      const { frameHeight } = FrameRenderer.calcDimensions(iw)
-      if (estImageHeight + 2 * bw + frameHeight > width) {
-        height = width
-        width = null
-      }
-    }
-
     let frameBorderWidth: number | undefined
-    ;({ width, height, resizeOpts, frameBorderWidth } = adjustForFrame(
-      width,
-      height,
-      resizeOpts,
-      originalWidth,
-      originalHeight,
-      willApplyFrame
-    ))
+
+    if (!preset) {
+      // 프리셋 없음: 원본 패스스루 (긴 변 최대 1920px)
+      const maxDim = Math.max(originalWidth, originalHeight)
+      if (maxDim > PREVIEW_MAX_PX) {
+        const isLandscape = originalWidth >= originalHeight
+        width = isLandscape ? PREVIEW_MAX_PX : null
+        height = isLandscape ? null : PREVIEW_MAX_PX
+        resizeOpts = { fit: 'inside', withoutEnlargement: true }
+      } else {
+        width = null
+        height = null
+        resizeOpts = {}
+      }
+    } else {
+      ;({ width, height, options: resizeOpts } = resolveResizeOptions(resizeMode, preset, originalWidth, originalHeight))
+
+      const needsFrame = frameStyle !== 'none'
+      if (needsFrame) {
+        exifData = await readExif(imagePath)
+      }
+      willApplyFrame = needsFrame && exifData != null && FrameRenderer.hasExif(exifData)
+
+      if (willApplyFrame && resizeMode.kind === 'aspect-ratio' && width != null && height == null) {
+        const bw = Math.max(8, Math.round(width * 0.015))
+        const iw = width - 2 * bw
+        const estImageHeight = Math.round(iw * (originalHeight / originalWidth))
+        const { frameHeight } = FrameRenderer.calcDimensions(iw)
+        if (estImageHeight + 2 * bw + frameHeight > width) {
+          height = width
+          width = null
+        }
+      }
+
+      ;({ width, height, resizeOpts, frameBorderWidth } = adjustForFrame(
+        width,
+        height,
+        resizeOpts,
+        originalWidth,
+        originalHeight,
+        willApplyFrame
+      ))
+    }
 
     let pipeline = sharp(imagePath, { sequentialRead: true })
     pipeline = pipeline.rotate()

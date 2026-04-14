@@ -22,7 +22,7 @@ const Preview = () => {
   const [imageError, setImageError] = useState<string | null>(null)
 
   const loadPreview = useCallback(async () => {
-    if (!selectedImage || !options.presetId) return
+    if (!selectedImage) return
 
     setLoading(true)
     try {
@@ -55,11 +55,11 @@ const Preview = () => {
   useEffect(() => {
     setPreviewData(null)
     setImageError(null)
-    if (!selectedImage || !options.presetId) return
+    if (!selectedImage) return
 
     const timer = setTimeout(loadPreview, PREVIEW_DEBOUNCE_MS)
     return () => clearTimeout(timer)
-  }, [loadPreview, selectedImage?.id, options.presetId])
+  }, [loadPreview, selectedImage?.id])
 
   if (!selectedImage) {
     return (
@@ -143,7 +143,7 @@ const Preview = () => {
           </div>
 
           {/* 변환 후 정보 */}
-          {previewData && (
+          {previewData && options.presetId && (
             <>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-text-muted">
                 <path d="M5 3L9 7L5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

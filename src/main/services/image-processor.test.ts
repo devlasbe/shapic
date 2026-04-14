@@ -1,6 +1,10 @@
-import { describe, it, expect } from 'vitest'
-import { resolveResizeOptions } from './image-processor.js'
-import type { ResizeModeType, PresetLookupType } from '../../shared/types.js'
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import sharp from 'sharp'
+import path from 'node:path'
+import fs from 'node:fs/promises'
+import os from 'node:os'
+import { resolveResizeOptions, ImageProcessor } from './image-processor.js'
+import type { ResizeModeType, PresetLookupType, OutputFormatType, FrameStyleType } from '../../shared/types.js'
 
 const makePreset = (
   width: number | null,
@@ -138,5 +142,95 @@ describe('resolveResizeOptions — 다른 모드 회귀 방지', () => {
     const result = resolveResizeOptions({ kind: 'height', pixels: 1500 }, null, 4000, 3000)
     expect(result.width).toBeNull()
     expect(result.height).toBe(1500)
+  })
+})
+
+// --- generatePreview null preset 패스스루 테스트 ---
+
+const PREVIEW_MAX_PX = 1920
+
+describe('generatePreview — null preset 패스스루', () => {
+  let tmpDir: string
+  let largeImagePath: string
+  let smallImagePath: string
+
+  beforeAll(async () => {
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'shapic-test-'))
+
+    // 큰 이미지 (4000x3000)
+    largeImagePath = path.join(tmpDir, 'large.jpg')
+    await sharp({ create: { width: 4000, height: 3000, channels: 3, background: { r: 128, g: 128, b: 128 } } })
+      .jpeg()
+      .toFile(largeImagePath)
+
+    // 작은 이미지 (800x600)
+    smallImagePath = path.join(tmpDir, 'small.jpg')
+    await sharp({ create: { width: 800, height: 600, channels: 3, background: { r: 200, g: 200, b: 200 } } })
+      .jpeg()
+      .toFile(smallImagePath)
+  })
+
+  afterAll(async () => {
+    await fs.rm(tmpDir, { recursive: true, force: true })
+  })
+
+  it('null preset + preset-fit 모드 → 에러 없이 결과 반환', async () => {
+    const result = await ImageProcessor.generatePreview(
+      largeImagePath, null,
+      { kind: 'preset-fit', fit: 'cover' },
+      'jpeg', 80, 'none'
+    )
+    expect(result).toHaveProperty('dataUrl')
+    expect(result).toHaveProperty('width')
+    expect(result).toHaveProperty('height')
+    expect(result).toHaveProperty('estimatedSize')
+    expect(result.dataUrl).toMatch(/^data:image\/jpeg;base64,/)
+  })
+
+  it('null preset + aspect-ratio 모드 → 에러 없이 결과 반환', async () => {
+    const result = await ImageProcessor.generatePreview(
+      largeImagePath, null,
+      { kind: 'aspect-ratio' },
+      'webp', 80, 'none'
+    )
+    expect(result.dataUrl).toMatch(/^data:image\/webp;base64,/)
+    expect(result.width).toBeGreaterThan(0)
+    expect(result.height).toBeGreaterThan(0)
+  })
+
+  it('null preset + 큰 이미지 → 긴 변이 1920px 이내', async () => {
+    const result = await ImageProcessor.generatePreview(
+      largeImagePath, null,
+      { kind: 'preset-fit', fit: 'cover' },
+      'jpeg', 80, 'none'
+    )
+    const maxSide = Math.max(result.width, result.height)
+    expect(maxSide).toBeLessThanOrEqual(PREVIEW_MAX_PX)
+  })
+
+  it('null preset + 작은 이미지 → 원본 크기 유지 (확대 안 함)', async () => {
+    const result = await ImageProcessor.generatePreview(
+      smallImagePath, null,
+      { kind: 'preset-fit', fit: 'cover' },
+      'jpeg', 80, 'none'
+    )
+    expect(result.width).toBe(800)
+    expect(result.height).toBe(600)
+  })
+
+  it('null preset + frameStyle minimal-white → 프레임 적용 안 됨', async () => {
+    const withFrame = await ImageProcessor.generatePreview(
+      largeImagePath, null,
+      { kind: 'preset-fit', fit: 'cover' },
+      'jpeg', 80, 'minimal-white'
+    )
+    const withoutFrame = await ImageProcessor.generatePreview(
+      largeImagePath, null,
+      { kind: 'preset-fit', fit: 'cover' },
+      'jpeg', 80, 'none'
+    )
+    // 프레임이 적용되지 않으므로 크기가 동일해야 함
+    expect(withFrame.width).toBe(withoutFrame.width)
+    expect(withFrame.height).toBe(withoutFrame.height)
   })
 })
