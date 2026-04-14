@@ -6,13 +6,13 @@ import { toast } from 'react-toastify'
  * "Error invoking remote method '{채널}': AppError: 원본 메시지"
  * AppError가 아닌 경우(라이브러리 영어 에러) fallback을 반환한다.
  */
-export const parseIpcError = (err: unknown, fallback: string): string => {
+const parseIpcError = (err: unknown, fallback: string): string => {
   if (!(err instanceof Error)) return fallback
   const match = err.message.match(/AppError:\s*(.+)$/)
   return match ? match[1] : fallback
 }
 
-export const showErrorToast = (message: string) => {
+const showErrorToast = (message: string) => {
   toast.error(message, {
     hideProgressBar: false,
     closeOnClick: true,
@@ -21,7 +21,7 @@ export const showErrorToast = (message: string) => {
   })
 }
 
-export const showSuccessToast = (message: string) => {
+const showSuccessToast = (message: string) => {
   toast.success(message, {
     hideProgressBar: false,
     closeOnClick: true,
@@ -29,3 +29,9 @@ export const showSuccessToast = (message: string) => {
     draggable: false
   })
 }
+
+export const Toast = {
+  parseIpcError,
+  error: showErrorToast,
+  success: showSuccessToast,
+} as const

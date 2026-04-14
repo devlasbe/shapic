@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAppStore } from '../stores/app-store'
 import { selectSelectedImage } from '../stores/selectors'
-import { formatFileSize, formatCompressionRatio } from '../utils/format'
-import { parseIpcError } from '../utils/toast'
+import { Format } from '../utils/format'
+import { Toast } from '../utils/toast'
 import { ERROR_CODES, ERROR_MESSAGES } from '../../../shared/errors'
 import DropZone from './drop-zone'
 
@@ -22,7 +22,7 @@ const Preview = () => {
   const [imageError, setImageError] = useState<string | null>(null)
 
   const loadPreview = useCallback(async () => {
-    if (!selectedImage || !options.presetId) return
+    if (!selectedImage) return
 
     setLoading(true)
     try {
@@ -40,7 +40,7 @@ const Preview = () => {
         updateImagePreview(selectedImage.id, result.dataUrl)
       }
     } catch (err) {
-      const message = parseIpcError(err, ERROR_MESSAGES[ERROR_CODES.IMAGE_PREVIEW_FAILED])
+      const message = Toast.parseIpcError(err, ERROR_MESSAGES[ERROR_CODES.IMAGE_PREVIEW_FAILED])
       setImageError(message)
     } finally {
       setLoading(false)
@@ -55,11 +55,11 @@ const Preview = () => {
   useEffect(() => {
     setPreviewData(null)
     setImageError(null)
-    if (!selectedImage || !options.presetId) return
+    if (!selectedImage) return
 
     const timer = setTimeout(loadPreview, PREVIEW_DEBOUNCE_MS)
     return () => clearTimeout(timer)
-  }, [loadPreview, selectedImage?.id, options.presetId])
+  }, [loadPreview, selectedImage?.id])
 
   if (!selectedImage) {
     return (
@@ -138,12 +138,12 @@ const Preview = () => {
             </span>
             <span className="text-text-muted">·</span>
             <span className="font-medium text-text-primary">
-              {formatFileSize(selectedImage.size)}
+              {Format.fileSize(selectedImage.size)}
             </span>
           </div>
 
           {/* 변환 후 정보 */}
-          {previewData && (
+          {previewData && options.presetId && (
             <>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-text-muted">
                 <path d="M5 3L9 7L5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -155,10 +155,10 @@ const Preview = () => {
                 </span>
                 <span className="text-text-muted">·</span>
                 <span className="font-medium text-primary">
-                  {formatFileSize(previewData.estimatedSize)}
+                  {Format.fileSize(previewData.estimatedSize)}
                 </span>
                 <span className="text-success text-[10px] font-medium ml-1">
-                  {formatCompressionRatio(selectedImage.size, previewData.estimatedSize)}
+                  {Format.compressionRatio(selectedImage.size, previewData.estimatedSize)}
                 </span>
               </div>
             </>

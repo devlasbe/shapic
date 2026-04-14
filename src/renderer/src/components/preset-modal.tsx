@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAppStore } from '../stores/app-store'
-import { showErrorToast, parseIpcError } from '../utils/toast'
+import { Toast } from '../utils/toast'
 import { ERROR_CODES, ERROR_MESSAGES } from '../../../shared/errors'
 import Modal from './ui/modal'
 import Button from './ui/button'
@@ -47,8 +47,8 @@ const PresetModal = ({ onClose }: PresetModalPropsType) => {
       }
       onClose()
     } catch (err) {
-      const message = parseIpcError(err, ERROR_MESSAGES[ERROR_CODES.PRESET_SAVE_FAILED])
-      showErrorToast(message)
+      const message = Toast.parseIpcError(err, ERROR_MESSAGES[ERROR_CODES.PRESET_SAVE_FAILED])
+      Toast.error(message)
     }
   }
 

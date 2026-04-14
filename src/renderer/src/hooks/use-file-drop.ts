@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react'
 import { useAppStore } from '../stores/app-store'
-import { processFiles, filterImageFiles } from '../utils/process-files'
-import { showErrorToast, parseIpcError } from '../utils/toast'
+import { ProcessFile } from '../utils/process-files'
+import { Toast } from '../utils/toast'
 import { ERROR_CODES, ERROR_MESSAGES } from '../../../shared/errors'
 
 export function useFileDrop() {
@@ -42,14 +42,14 @@ export function useFileDrop() {
 
       try {
         const files = Array.from(e.dataTransfer.files)
-        const paths = filterImageFiles(files)
-        const imageFiles = await processFiles(paths)
+        const paths = ProcessFile.filter(files)
+        const imageFiles = await ProcessFile.load(paths)
         if (imageFiles.length > 0) {
           addImages(imageFiles)
         }
       } catch (err) {
-        const message = parseIpcError(err, ERROR_MESSAGES[ERROR_CODES.IMAGE_LOAD_FAILED])
-        showErrorToast(message)
+        const message = Toast.parseIpcError(err, ERROR_MESSAGES[ERROR_CODES.IMAGE_LOAD_FAILED])
+        Toast.error(message)
       }
     },
     [addImages]

@@ -1,16 +1,11 @@
 import { ipcMain } from 'electron'
-import {
-  getCustomPresets,
-  saveCustomPreset,
-  updateCustomPreset,
-  deleteCustomPreset
-} from '../services/preset-store.js'
+import { PresetStore } from '../services/preset-store.js'
 import { AppError, ERROR_CODES } from '../../shared/errors.js'
 
 export const registerPresetHandlers = () => {
   ipcMain.handle('preset:list', async () => {
     try {
-      return getCustomPresets()
+      return PresetStore.getAll()
     } catch (err) {
       if (err instanceof AppError) throw err
       throw new AppError(ERROR_CODES.PRESET_LIST_FAILED)
@@ -27,7 +22,7 @@ export const registerPresetHandlers = () => {
     description: string
   }) => {
     try {
-      return saveCustomPreset(preset)
+      return PresetStore.save(preset)
     } catch (err) {
       if (err instanceof AppError) throw err
       throw new AppError(ERROR_CODES.PRESET_SAVE_FAILED)
@@ -36,7 +31,7 @@ export const registerPresetHandlers = () => {
 
   ipcMain.handle('preset:update', async (_event, id: string, input: Record<string, unknown>) => {
     try {
-      return updateCustomPreset(id, input)
+      return PresetStore.update(id, input)
     } catch (err) {
       if (err instanceof AppError) throw err
       throw new AppError(ERROR_CODES.PRESET_SAVE_FAILED)
@@ -45,7 +40,7 @@ export const registerPresetHandlers = () => {
 
   ipcMain.handle('preset:delete', async (_event, id: string) => {
     try {
-      deleteCustomPreset(id)
+      PresetStore.delete(id)
     } catch (err) {
       if (err instanceof AppError) throw err
       throw new AppError(ERROR_CODES.PRESET_DELETE_FAILED)

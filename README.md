@@ -1,6 +1,7 @@
-<h1>
-  <img src="./resources/icon.png" width="28" alt="Shapic" />
+<h1 align="center">
+  <img src="./resources/icon.png" width="35" alt="Shapic" />
   Shapic
+  <a href="https://github.com/devlasbe/shapic/releases"><img src="https://img.shields.io/github/downloads/devlasbe/shapic/total" alt="GitHub Downloads" /></a>
 </h1>
 
 ![Shapic 스크린샷](https://github.com/user-attachments/assets/d5e47772-d508-4124-a7f9-35af62e4e046)

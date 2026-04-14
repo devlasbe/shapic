@@ -1,9 +1,9 @@
 import { useCallback } from 'react'
 import { useAppStore } from '../stores/app-store'
 import { cn } from '../utils/cn'
-import { formatFileSize } from '../utils/format'
-import { processFiles } from '../utils/process-files'
-import { showErrorToast, parseIpcError } from '../utils/toast'
+import { Format } from '../utils/format'
+import { ProcessFile } from '../utils/process-files'
+import { Toast } from '../utils/toast'
 import { ERROR_CODES, ERROR_MESSAGES } from '../../../shared/errors'
 import DropZone from './drop-zone'
 import type { ImageFileType } from '../types'
@@ -58,7 +58,7 @@ const ImageListItem = ({
       <div className="flex-1 min-w-0">
         <p className="text-xs font-medium truncate text-text-primary">{image.name}</p>
         <p className="text-[10px] text-text-muted">
-          {image.width}x{image.height} · {formatFileSize(image.size)}
+          {image.width}x{image.height} · {Format.fileSize(image.size)}
         </p>
       </div>
     </button>
@@ -75,11 +75,11 @@ const ImageList = () => {
     try {
       const paths = await window.api.dialog.openFile()
       if (!paths) return
-      const imageFiles = await processFiles(paths)
+      const imageFiles = await ProcessFile.load(paths)
       if (imageFiles.length > 0) useAppStore.getState().addImages(imageFiles)
     } catch (err) {
-      const message = parseIpcError(err, ERROR_MESSAGES[ERROR_CODES.DIALOG_OPEN_FILE_FAILED])
-      showErrorToast(message)
+      const message = Toast.parseIpcError(err, ERROR_MESSAGES[ERROR_CODES.DIALOG_OPEN_FILE_FAILED])
+      Toast.error(message)
     }
   }, [])
 

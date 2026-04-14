@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useRef } from 'react'
 import { useAppStore } from '../stores/app-store.js'
-import { showErrorToast, parseIpcError } from '../utils/toast.js'
+import { Toast } from '../utils/toast.js'
 import { ERROR_CODES, ERROR_MESSAGES } from '../../../shared/errors.js'
 import type { ProcessingProgressType, BatchResultType } from '../types/index.js'
 
@@ -69,13 +69,13 @@ export const useProcessing = () => {
         }
         for (const [message, count] of errorGroups) {
           if (count > 1) {
-            showErrorToast(`${message} (${count}장)`)
+            Toast.error(`${message} (${count}장)`)
           } else {
             const original = result.errors.find((e) => {
               const base = e.error.includes(': ') ? e.error.split(': ')[0] : e.error
               return base === message
             })!
-            showErrorToast(original.error)
+            Toast.error(original.error)
           }
         }
       }
@@ -114,8 +114,8 @@ export const useProcessing = () => {
           frame: options.frameStyle
         })
       } catch (err) {
-        const message = parseIpcError(err, ERROR_MESSAGES[ERROR_CODES.IMAGE_PROCESS_FAILED])
-        showErrorToast(message)
+        const message = Toast.parseIpcError(err, ERROR_MESSAGES[ERROR_CODES.IMAGE_PROCESS_FAILED])
+        Toast.error(message)
         setProgress({ isProcessing: false, overallPercent: 0 })
         imagesToProcess.forEach((img) => updateImageStatus(img.id, 'error'))
       }
