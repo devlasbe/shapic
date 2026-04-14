@@ -52,7 +52,7 @@ type ProcessingProgressType = {
   error?: string
 }
 
-const resolveResizeOptions = (
+export const resolveResizeOptions = (
   mode: ResizeModeType,
   preset: PresetLookupType | null,
   originalWidth: number,
@@ -82,18 +82,19 @@ const resolveResizeOptions = (
       }
     }
     case 'aspect-ratio': {
-      // Use the preset's larger dimension as long-side target; scale proportionally.
       if (!preset || (preset.width === null && preset.height === null)) {
         return { width: null, height: null, options: {} }
       }
-      const maxSide = Math.max(preset.width ?? 0, preset.height ?? 0)
+      const pw = preset.width ?? 0
+      const ph = preset.height ?? 0
+      const maxSide = Math.max(pw, ph)
       if (maxSide <= 0) {
         return { width: null, height: null, options: {} }
       }
-      const isLandscape = originalWidth >= originalHeight
+      const isPresetWider = pw >= ph
       return {
-        width: isLandscape ? maxSide : null,
-        height: isLandscape ? null : maxSide,
+        width: isPresetWider ? maxSide : null,
+        height: isPresetWider ? null : maxSide,
         options: { fit: 'inside', withoutEnlargement: false }
       }
     }
