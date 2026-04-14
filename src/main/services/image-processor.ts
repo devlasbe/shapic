@@ -6,7 +6,7 @@ import type { BrowserWindow } from 'electron'
 import type { ResizeModeType, OutputFormatType, FrameStyleType, PresetLookupType } from '../../shared/types.js'
 import { AppError, ERROR_CODES } from '../../shared/errors.js'
 import { readExif } from './exif-reader.js'
-import { applyFrame, hasExifForFrame, calcFrameLayout, calcFrameDimensions } from './frame-renderer.js'
+import { FrameRenderer } from './frame-renderer.js'
 
 type ProcessImageOptionsType = {
   inputPath: string
@@ -144,7 +144,7 @@ const constrainFrameByHeight = (
   // First pass: estimate image width from target height
   const estImageWidth = Math.round(targetHeight * (originalWidth / originalHeight))
   const estBorderWidth = Math.max(8, Math.round(estImageWidth * 0.015))
-  const { frameHeight: estFrameHeight } = calcFrameDimensions(Math.max(1, estImageWidth - 2 * estBorderWidth))
+  const { frameHeight: estFrameHeight } = FrameRenderer.calcDimensions(Math.max(1, estImageWidth - 2 * estBorderWidth))
   const estInnerHeight = targetHeight - 2 * estBorderWidth - estFrameHeight
 
   if (estInnerHeight < 1) {
@@ -154,7 +154,7 @@ const constrainFrameByHeight = (
   // Correction pass: recalculate from the corrected image width
   const correctedWidth = Math.round(estInnerHeight * (originalWidth / originalHeight))
   const borderWidth = Math.max(8, Math.round(correctedWidth * 0.015))
-  const { frameHeight } = calcFrameDimensions(correctedWidth)
+  const { frameHeight } = FrameRenderer.calcDimensions(correctedWidth)
   const innerHeight = targetHeight - 2 * borderWidth - frameHeight
 
   if (innerHeight < 1) {
@@ -183,7 +183,7 @@ const adjustForFrame = (
 
   // Both dimensions specified (preset-fit mode)
   if (width != null && height != null) {
-    const layout = calcFrameLayout(width, height)
+    const layout = FrameRenderer.calcLayout(width, height)
     if (layout.innerWidth < 1 || layout.innerHeight < 1) {
       return { width, height, resizeOpts, frameBorderWidth: undefined }
     }
@@ -302,7 +302,7 @@ const processImage = async (options: ProcessImageOptionsType): Promise<Processed
   if (needsFrame) {
     exifData = await readExif(inputPath)
   }
-  const willApplyFrame = needsFrame && exifData != null && hasExifForFrame(exifData)
+  const willApplyFrame = needsFrame && exifData != null && FrameRenderer.hasExif(exifData)
 
   // For aspect-ratio mode: if constraining by width would make the final height
   // exceed maxSide (due to frame vertical overhead), switch to height constraint
@@ -310,7 +310,7 @@ const processImage = async (options: ProcessImageOptionsType): Promise<Processed
     const bw = Math.max(8, Math.round(width * 0.015))
     const iw = width - 2 * bw
     const estImageHeight = Math.round(iw * (originalHeight / originalWidth))
-    const { frameHeight } = calcFrameDimensions(iw)
+    const { frameHeight } = FrameRenderer.calcDimensions(iw)
     if (estImageHeight + 2 * bw + frameHeight > width) {
       height = width
       width = null
@@ -346,7 +346,7 @@ const processImage = async (options: ProcessImageOptionsType): Promise<Processed
       throw new AppError(ERROR_CODES.IMAGE_RESIZE_FAILED, filename)
     }
 
-    const framedBuffer = await applyFrame(resizedBuffer, exifData!, frameBorderWidth)
+    const framedBuffer = await FrameRenderer.apply(resizedBuffer, exifData!, frameBorderWidth)
 
     try {
       let outputPipeline = sharp(framedBuffer)
@@ -395,7 +395,7 @@ const processImage = async (options: ProcessImageOptionsType): Promise<Processed
   }
 }
 
-export const processBatch = async (
+const processBatch = async (
   options: BatchProcessOptionsType,
   sender: BrowserWindow['webContents']
 ): Promise<BatchResultType> => {
@@ -475,7 +475,7 @@ export const processBatch = async (
   return batchResult
 }
 
-export const generatePreview = async (
+const generatePreview = async (
   imagePath: string,
   preset: PresetLookupType | null,
   resizeMode: ResizeModeType,
@@ -498,13 +498,13 @@ export const generatePreview = async (
     if (needsFrame) {
       exifData = await readExif(imagePath)
     }
-    const willApplyFrame = needsFrame && exifData != null && hasExifForFrame(exifData)
+    const willApplyFrame = needsFrame && exifData != null && FrameRenderer.hasExif(exifData)
 
     if (willApplyFrame && resizeMode.kind === 'aspect-ratio' && width != null && height == null) {
       const bw = Math.max(8, Math.round(width * 0.015))
       const iw = width - 2 * bw
       const estImageHeight = Math.round(iw * (originalHeight / originalWidth))
-      const { frameHeight } = calcFrameDimensions(iw)
+      const { frameHeight } = FrameRenderer.calcDimensions(iw)
       if (estImageHeight + 2 * bw + frameHeight > width) {
         height = width
         width = null
@@ -528,7 +528,7 @@ export const generatePreview = async (
     let resultBuffer: Buffer
     if (willApplyFrame) {
       const resizedBuffer = await pipeline.toBuffer()
-      resultBuffer = await applyFrame(resizedBuffer, exifData!, frameBorderWidth)
+      resultBuffer = await FrameRenderer.apply(resizedBuffer, exifData!, frameBorderWidth)
     } else {
       resultBuffer = await pipeline.toBuffer()
     }
@@ -558,7 +558,7 @@ export const generatePreview = async (
   }
 }
 
-export const loadImageMetadata = async (filePath: string) => {
+const loadImageMetadata = async (filePath: string) => {
   const metadata = await sharp(filePath).metadata()
   if (!metadata.width || !metadata.height) {
     throw new AppError(ERROR_CODES.IMAGE_METADATA_READ_FAILED, path.basename(filePath))
@@ -576,3 +576,9 @@ export const loadImageMetadata = async (filePath: string) => {
     exifData
   }
 }
+
+export const ImageProcessor = {
+  processBatch,
+  generatePreview,
+  loadMetadata: loadImageMetadata,
+} as const

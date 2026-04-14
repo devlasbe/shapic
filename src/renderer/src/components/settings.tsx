@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 import { useAppStore } from '../stores/app-store'
 import { selectSelectedImage, selectHasImages, selectIsAllDone } from '../stores/selectors'
 import { useProcessing } from '../hooks/use-processing'
-import { showErrorToast, parseIpcError } from '../utils/toast'
+import { Toast } from '../utils/toast'
 import { ERROR_CODES, ERROR_MESSAGES } from '../../../shared/errors'
 import PresetSelector from './preset-selector'
 import PillButton from './ui/pill-button'
@@ -26,8 +26,8 @@ const Settings = () => {
       const folder = await window.api.dialog.openFolder()
       if (folder) setOption('outputFolder', folder)
     } catch (err) {
-      const message = parseIpcError(err, ERROR_MESSAGES[ERROR_CODES.DIALOG_OPEN_FOLDER_FAILED])
-      showErrorToast(message)
+      const message = Toast.parseIpcError(err, ERROR_MESSAGES[ERROR_CODES.DIALOG_OPEN_FOLDER_FAILED])
+      Toast.error(message)
     }
   }, [setOption])
 

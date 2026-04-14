@@ -25,11 +25,11 @@ const store = new Store<StoreSchemaType>({
   }
 })
 
-export const getCustomPresets = (): PresetType[] => {
+const getCustomPresets = (): PresetType[] => {
   return store.get('customPresets')
 }
 
-export const saveCustomPreset = (input: Omit<PresetType, 'id' | 'isCustom'>): PresetType => {
+const saveCustomPreset = (input: Omit<PresetType, 'id' | 'isCustom'>): PresetType => {
   const preset: PresetType = {
     ...input,
     id: `custom-${crypto.randomUUID()}`,
@@ -40,7 +40,7 @@ export const saveCustomPreset = (input: Omit<PresetType, 'id' | 'isCustom'>): Pr
   return preset
 }
 
-export const updateCustomPreset = (id: string, input: Partial<Omit<PresetType, 'id' | 'isCustom'>>): PresetType => {
+const updateCustomPreset = (id: string, input: Partial<Omit<PresetType, 'id' | 'isCustom'>>): PresetType => {
   const current = store.get('customPresets')
   const index = current.findIndex((p) => p.id === id)
   if (index === -1) throw new AppError(ERROR_CODES.PRESET_LOOKUP_FAILED, id)
@@ -52,7 +52,7 @@ export const updateCustomPreset = (id: string, input: Partial<Omit<PresetType, '
   return updated
 }
 
-export const deleteCustomPreset = (id: string): void => {
+const deleteCustomPreset = (id: string): void => {
   const current = store.get('customPresets')
   const target = current.find((p) => p.id === id)
   if (!target) throw new AppError(ERROR_CODES.PRESET_LOOKUP_FAILED, id)
@@ -61,3 +61,10 @@ export const deleteCustomPreset = (id: string): void => {
     current.filter((p) => p.id !== id)
   )
 }
+
+export const PresetStore = {
+  getAll: getCustomPresets,
+  save: saveCustomPreset,
+  update: updateCustomPreset,
+  delete: deleteCustomPreset,
+} as const

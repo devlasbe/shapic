@@ -19,7 +19,7 @@ const buildInfoParts = (exif: ExifDataType) => {
   return { cameraInfo, lensInfo, settingsParts }
 }
 
-export const calcFrameDimensions = (imageWidth: number): { frameHeight: number; fontSize: number } => {
+const calcFrameDimensions = (imageWidth: number): { frameHeight: number; fontSize: number } => {
   const frameHeight = Math.max(32, Math.min(200, Math.round(imageWidth * 0.05)))
   const fontSize = Math.max(8, Math.min(48, Math.round(frameHeight * 0.23)))
   return { frameHeight, fontSize }
@@ -40,7 +40,7 @@ const generateMinimalWhiteSvg = (ctx: FrameContextType): { svg: string; frameHei
   return { svg, frameHeight }
 }
 
-export const calcFrameLayout = (targetWidth: number, targetHeight: number) => {
+const calcFrameLayout = (targetWidth: number, targetHeight: number) => {
   const borderWidth = Math.max(8, Math.round(targetWidth * 0.015))
   const innerWidth = targetWidth - 2 * borderWidth
   const { frameHeight } = calcFrameDimensions(innerWidth)
@@ -52,7 +52,7 @@ export const calcFrameLayout = (targetWidth: number, targetHeight: number) => {
   }
 }
 
-export const applyFrame = async (
+const applyFrame = async (
   resizedImageBuffer: Buffer,
   exif: ExifDataType,
   overrideBorderWidth?: number
@@ -96,7 +96,7 @@ export const applyFrame = async (
   }
 }
 
-export const hasExifForFrame = (exif: ExifDataType | null): boolean => {
+const hasExifForFrame = (exif: ExifDataType | null): boolean => {
   if (!exif) return false
   return !!(
     exif.cameraBrand ||
@@ -108,3 +108,10 @@ export const hasExifForFrame = (exif: ExifDataType | null): boolean => {
     exif.focalLength
   )
 }
+
+export const FrameRenderer = {
+  calcDimensions: calcFrameDimensions,
+  calcLayout: calcFrameLayout,
+  apply: applyFrame,
+  hasExif: hasExifForFrame,
+} as const

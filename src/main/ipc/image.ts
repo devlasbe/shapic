@@ -1,6 +1,6 @@
 import { ipcMain, BrowserWindow } from 'electron'
-import { loadImageMetadata, processBatch, generatePreview } from '../services/image-processor.js'
-import { getCustomPresets } from '../services/preset-store.js'
+import { ImageProcessor } from '../services/image-processor.js'
+import { PresetStore } from '../services/preset-store.js'
 import { BUILT_IN_PRESET_MAP } from '../../shared/presets.js'
 import type { PresetLookupType, ResizeModeType, OutputFormatType, FrameStyleType } from '../../shared/types.js'
 import { AppError, ERROR_CODES } from '../../shared/errors.js'
@@ -8,7 +8,7 @@ import { AppError, ERROR_CODES } from '../../shared/errors.js'
 const findPreset = (presetId: string | null): PresetLookupType | null => {
   if (!presetId) return null
   if (BUILT_IN_PRESET_MAP[presetId]) return BUILT_IN_PRESET_MAP[presetId]
-  const custom = getCustomPresets().find((p) => p.id === presetId)
+  const custom = PresetStore.getAll().find((p) => p.id === presetId)
   if (custom)
     return {
       id: custom.id,
@@ -23,7 +23,7 @@ const findPreset = (presetId: string | null): PresetLookupType | null => {
 export const registerImageHandlers = () => {
   ipcMain.handle('image:load', async (_event, filePaths: string[]) => {
     try {
-      const results = await Promise.all(filePaths.map((fp) => loadImageMetadata(fp)))
+      const results = await Promise.all(filePaths.map((fp) => ImageProcessor.loadMetadata(fp)))
       return results
     } catch (err) {
       if (err instanceof AppError) throw err
@@ -50,7 +50,7 @@ export const registerImageHandlers = () => {
 
       const preset = findPreset(options.presetId)
 
-      await processBatch(
+      await ImageProcessor.processBatch(
         {
           images: options.images,
           outputDir: options.outputDir,
@@ -79,7 +79,7 @@ export const registerImageHandlers = () => {
       }
     ) => {
       const preset = findPreset(request.presetId)
-      return generatePreview(
+      return ImageProcessor.generatePreview(
         request.imagePath,
         preset,
         request.resizeMode,

@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useAppStore } from '../stores/app-store'
-import { processFiles } from '../utils/process-files'
-import { showErrorToast, parseIpcError } from '../utils/toast'
+import { ProcessFile } from '../utils/process-files'
+import { Toast } from '../utils/toast'
 import { ERROR_CODES, ERROR_MESSAGES } from '../../../shared/errors'
 
 const DropZone = () => {
@@ -11,11 +11,11 @@ const DropZone = () => {
     try {
       const paths = await window.api.dialog.openFile()
       if (!paths) return
-      const imageFiles = await processFiles(paths)
+      const imageFiles = await ProcessFile.load(paths)
       if (imageFiles.length > 0) addImages(imageFiles)
     } catch (err) {
-      const message = parseIpcError(err, ERROR_MESSAGES[ERROR_CODES.DIALOG_OPEN_FILE_FAILED])
-      showErrorToast(message)
+      const message = Toast.parseIpcError(err, ERROR_MESSAGES[ERROR_CODES.DIALOG_OPEN_FILE_FAILED])
+      Toast.error(message)
     }
   }, [addImages])
 
